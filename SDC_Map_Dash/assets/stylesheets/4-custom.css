@@ -1,0 +1,525 @@
+/* ================INSTRUCTIONS=================*/ 
+/* By changing the info below, you can reduce the size of the logo or hide the search box. You can also override the standard font characteristics if you would like to use your own custom styles. In order for your changes to work though, you MUST include a reference in your HTML pages to both the common CSS file and custom CSS file in that order.
+
+Instructions are provided below for customizing these classes. */
+
+/* =============Width===============*/ 
+/* BY DEFAULT, THERE IS NO MAX WIDTH:
+If you want the want to restrict the width of the page, remove the comment out slashes and astricks surrounding the ".tmp-container  {max-width: 1170px;}". you can change the 1170px to a smaller/larger max width if you'd like */
+ 
+ .tmp-container {
+	max-width: 1400px;
+} 
+
+/* =============Search===============*/ 
+/* BY DEFAULT, Search box is displayed:
+If you want the to hide the search, remove the comment out slashes and astricks surrounding the ".search-box {display:none;}" below.  */
+ 
+/*#search-box {
+	display: none;
+}*/
+
+/* =============LOGO===============*/ 
+/* THE DEFAULT LOGO HEIGHT IS 65PX:
+If you want the logo to be smaller (50px), comment out the ".logo-header img {height 65px;}" below and remove the comment out slashes and astricks surrounding the ".logo-header img {height: 50px...margin-top: 18px;}" and the header search input (so the search box size is reduced too). 50px is the MINIMUM HEIGHT for the logo. */
+/* 
+.logo-header img {
+    height: 65px;
+}
+*/
+.logo-header img {
+	height: 50px;
+} 
+/*
+.header-search input[type="search"] {
+	height: 30px;
+	margin-top: 16px;
+}
+.header-search button[type="submit"] {
+	width: 26px;
+	height: 30px;
+	margin-top: 18px;
+}
+*/
+
+/* =============STANDARD CONTENT===============*/ 
+/* TO CHANGE THE TEXT SIZE OF THE CONTENT, FONT, ETC:
+By default, USGS has set the font size, family, etc. in order to provide a consistent size for content across all pages. If you would prefer not to have any of these pre-defined formats, you can change them below. NOTE: header and footer will not be changed. */
+#maincontent {
+	font-family: 'Source Sans Pro',sans-serif;
+	font-size: 14px;
+    line-height: 1.42857;
+    color: #333333;
+    background-color: #fff;
+	padding-left: 15px;
+	padding-right: 15px;
+}
+
+/* =============SEARCH===============*/ 
+/* THIS HIDES THE SEARCH BOX ON VERY SMALL DEVICES:
+For simplification, search bar is visible on larger screens but is hidden on small screens. If you would prefer not to have the search box at all, you can remove the "@media (max-width:500px) {" and the second closing "}". below */
+@media (max-width:500px) {
+.header-search form { 
+	display: none}
+}
+
+/* =============SOCIAL MEDIA===============*/ 
+/* If you would prefer not to have the social media links, you can remove the comment out slashes and astricks surrounding the content below */
+ /* .footer-social-links { 
+	display: none} */
+
+/* =============HR TAG FOR FOOTER IN FIREFOX ===============*/
+@-moz-document url-prefix() {
+footer-doi hr {
+     clear:both;
+  }
+}
+
+/* ============= Page Content CSS by SAS ===============*/
+
+a {
+	cursor: pointer !important;
+}
+
+.advanced-search {
+	font-size: 13px;
+    margin-top: 2px;
+    margin-right: 12px;
+    line-height: 16px
+}
+
+.align-left {
+	float: left !important;
+}
+
+.align-right {
+	float: right !important;
+}
+
+.bb-left-margin {
+	margin-left: 30px;
+}
+
+.bb-right-margin {
+	margin-right: 30px;
+}
+
+.bi-icon-spacer {
+	margin-right: 8px;
+}
+
+body {
+	font-family: 'Asap', sans-serif;
+}
+
+.browse-dr-link {
+	font-size: 14px !important;
+}
+
+.center-date-range-text {
+	text-align: center;
+	font-weight: bold;
+}
+
+.chart-bkgnd {
+	background-color: #fff;
+	margin-top: 15px;
+}
+
+.clearIt {
+	clear: both;
+}
+
+.custom-tabs-container {   
+	clear: both;
+}
+
+.custom-tabs {
+    border-top-left-radius: 3px;
+    background-color: #f9f9f9;
+    padding: 0px 24px;
+    border-bottom: 1px solid #d6d6d6;
+}
+
+.custom-tab {
+    color:#586069;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-top: 3px solid transparent !important;
+    border-left: 0px !important;
+    border-right: 0px !important;
+    border-bottom: 0px !important;
+    background-color: #fafbfc;
+    padding: 12px !important;
+    font-family: "system-ui";
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+	width: 200px;
+}
+
+.custom-tab--selected {
+    color: black;
+    box-shadow: 1px 1px 0px white;
+    border-left: 1px solid lightgrey !important;
+    border-right: 1px solid lightgrey !important;
+    border-top: 4px solid #e36209 !important;
+	width: 100%;
+    padding: 10px 17px;
+    background: #7f7f7f;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+div#tabs-content-classes {
+    width: -webkit-fill-available;
+    padding: 15px;
+	padding-top: 30px;
+    background: #fff;
+    margin-top: -30px;
+	text-align: center;
+}
+
+div#tabs-content-classes h4,
+div#tabs-content-classes a {
+    text-align: center;
+	clear: both;
+}
+
+div#tabs-with-classes-parent {
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+/*.dash-graph {
+    clear: both;
+    background-color: #f8f9fa !important;
+    margin-left: 0px;
+    margin-right: 0px;
+    border-top: .6em solid #e6e5e5;
+    border-bottom: .6em solid #f2f2f2;
+    margin-bottom: 30px;
+    padding: 20px;
+}*/
+
+.explore-sb-box {
+	margin: auto;
+	margin-bottom: 80px;
+	margin-bottom: 30px;
+	margin-top: 10px;
+	min-height: 180px;
+	padding: 20px;
+	border: .6em solid #e6e5e5;
+}
+
+/*.explore-sb-box:hover {
+    background-color:#C9C9C9;
+}*/
+
+.explore-sb-box svg.bi-document-richtext {
+	color: #106ce0;
+	color: #011f4b;
+}
+
+.explore-sb-box svg.bi-images {
+	color: #fc4c02;
+	color: #011f4b;
+}
+
+.explore-sb-box svg.bi-people-fill {
+	color: #1b9271;
+	color: #011f4b;
+}
+
+.explore-sb-box svg.bi-map {
+	color: #106ce0;
+	color: #011f4b;
+}
+
+.explore-sb-row {
+	margin-left: 0px;
+	margin-right: 0px;
+	border-top: .6em solid #e6e5e5;
+	border-bottom: .6em solid #f2f2f2;
+	margin-bottom: 30px;
+	padding: 20px;
+}
+
+.explore-sb-row-h2 {
+	font-size: 24px;
+	text-align: center;
+	margin-bottom: 15px;
+}
+
+.fa-box {
+	margin-bottom: 15px;
+	margin-bottom: 25px;
+	margin-top: 25px;
+}
+
+.fa-box.item1 {
+    margin-top: 28px;
+}
+
+footer.footer hr {
+	border: .5px solid #fff !important;
+	margin-bottom: 25px;
+}
+
+footer.footer .footer-doi {
+	margin-top: 12px;
+	margin-bottom: -12px
+}
+
+footer.footer .footer-social-links {
+    margin-top: -28px;
+}
+
+form.ml-auto {
+    margin-right: 10px;
+}
+
+.graphic-chart {
+	max-width:100%;
+	max-height: 360px;
+}
+
+h1.page-title {
+	font-size: 4em;
+}
+
+h2.section-header {
+	font-size: 1.2em;
+	font-weight: bold;
+	text-align: center;
+	padding-top: 20px;
+	margin-bottom: 20px;
+}
+
+h2.data-release-box {
+	font-size: 16px !important;
+	margin-top: 60px !important;
+	margin-bottom: 20px !important;
+	text-align: left;
+}
+
+.header-h3 {
+	text-align: center;
+	font-size: 22px;	
+}
+
+.header-search button[type="submit"] {
+    margin-top: 17px;
+    margin-right: -15px;
+}
+
+img {
+	clear: both;
+}
+
+.img-container {
+  position: relative;
+  text-align: center;
+  color: white;
+  clear: both;
+}
+
+.img-text-centered {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 580px;
+  max-width: 580px;
+}
+
+.img-text-centered h1 {
+  font-weight: bold;
+  font-size: 2.4em;
+  font-size-adjust: auto;
+}
+
+.img-text-centered p {
+  font-weight: bold;
+  font-size: 1em;
+}
+
+input[type="search"] {
+    text-indent: 10px;
+}
+
+.dataTables_length label,
+.dataTables_filter label {
+    display: flex;
+    margin-bottom: .5rem;
+}
+
+a.learn-more-link {
+	text-align: left !important;
+	margin-top: 10px;
+}
+
+.lm-box {
+	margin-bottom: 15px;
+}
+
+.login {
+	font-size: 13px;
+	margin-top: -2px;
+}
+
+/* Fixes dropdown menus placed on the right side */
+
+/*-- NavBar Styles --*/
+.navbar-nav {
+    flex-direction: row !important;
+    float: right;
+}
+
+.navbar-light .navbar-toggler {
+    color: rgba(0,0,0,.5);
+    border-color: rgba(0,0,0,0);
+}
+
+
+/* Fixes dropdown menus placed on the right side */
+.ml-auto .dropdown-menu {
+  left: auto !important;
+  right: 0px;
+}
+
+.nav-background {
+	background-color: #f8f9fa;
+	background-color: #e5e9ed;
+	clear: both;
+}
+
+.navbar-light .navbar-toggler {
+    float: right;
+	border: 0px;
+	font-size: 2.2em;
+}
+
+.navbar-brand img {
+    margin-top: -5px;
+}
+
+.nav-item {
+    display: inline !important;
+    margin-left: 25px;
+	}
+
+
+.navbar-nav {
+    flex-direction: row !important;
+	float: right;
+}
+
+
+li.nav-item {
+    display: inline !important;
+    margin-right: 25px;
+}
+ul.navbar-nav {
+    margin-right: -25px !important;
+}
+
+.sb-footer {
+	margin-left: 0px;
+	margin-right: 0px;
+	margin-top: 35px;
+	border-top: .6em solid #e6e5e5;
+	background-color: #e5e9ed;
+    clear: both;
+	font-size: .8em;
+	padding: 15px;
+	padding-top: 5px;
+	padding-bottom: 10px;
+}
+
+.sb.navbar-brand {
+	font-size: 1.95em;
+	font-weight: bold;
+}
+
+span.page-sub-title {
+	font-size: 16px;
+}
+
+span.project-box-area {
+	padding: 20px;
+	padding-top: 10px;
+	width: 410px;
+	background-color: #f8f9fa !important;
+	float: right;
+	margin-left: 30px;
+	margin-bottom: 30px;
+}
+
+.tab-align {
+	text-align: center;
+}
+
+.textHeader {
+    font-size: 40px;
+    font-weight: 900;
+    line-height: 20px;
+	margin-top: 20px;
+	margin-bottom: 20px;
+    color: black;
+}
+
+.top-section h1 {
+	margin-left: 15px;
+	margin-top: 15px; 
+	font-size: 28px;
+	font-weight: 900;
+}
+
+.top-section p {
+	margin-left: 15px;
+}
+
+ul.navbar-nav {
+    margin-left: 10px !important;
+}
+
+.updates {
+	text-align: right;
+}
+
+@media (max-width:575px) {
+	.explore-sb-box {
+		margin-bottom: 15px;
+	}
+	.explore-sb-row {
+		margin-top: 20px;
+	}
+}
+
+@media (min-width: 600px) {
+
+}
+
+@media (max-width:730px) {
+	
+}
+
+@media (max-width:766px) {
+	
+}
+
+@media (max-width:991px) {
+
+}
+
+@media (min-width: 1200px) {
+.navbar-expand-md .navbar-nav {
+    -ms-flex-direction: row;
+    flex-direction: row;
+}
+}
+
+
+

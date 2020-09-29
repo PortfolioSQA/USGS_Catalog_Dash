@@ -1,0 +1,10 @@
+body {
+    font-family: 'Asap', sans-serif;
+}
+
+h1, h2, h3, h4, h5, .header-menu-dropdown li a, h6, .header-menu-dropdown li .nolink, .header-menu-dropdown li ul li a, .header-social-container .header-social-dropdown ul li a, .h1, .h2, .h3, .accordion-title .accordion-toggle, .h4, .view-science-center-object-overview .col-lg-3 .sco-keywords ul > li, .accordion-menu .toggled-content p, .accordion-title span, .mobile-science-center-menu p, .related-topics ul li, .h5, .header-nav-link a > b, .h6, .mobile-header-dropdown.header-share ul a {
+    font-family: 'Asap', sans-serif;
+    font-weight: 500;
+    line-height: 1.1;
+    color: inherit;
+}
