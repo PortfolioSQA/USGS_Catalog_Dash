@@ -2,6 +2,8 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
+from etl import create_dfs
+from dash.dash import no_update
 
 
 import dash_bootstrap_components as dbc
@@ -13,8 +15,12 @@ df = pd.read_csv("solar.csv")
 
 external_stylesheets = [dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app.config['suppress_callback_exceptions'] = True
 
 mapbox_access_token = 'pk.eyJ1Ijoic2RjLWRhc2giLCJhIjoiY2tmMzZqb21vMDA2ejJ1cGdjeDg5OGRiOCJ9.alrKKaVlRO4DIJmMWYY1WQ'
+#load data
+sample_data = pd.read_csv('sdc_sample.csv')
+df_map, df_US, df_earth = create_dfs(sample_data)
 
 # USGS & ScienceBase Headers and Footers
 app.index_string = """
@@ -161,6 +167,52 @@ app.index_string = """
     </body>
 </html>
 """
+#  Layouts
+layout_table = dict(
+    autosize=True,
+    height=500,
+    font=dict(color="#191A1A"),
+    titlefont=dict(color="#191A1A", size='14'),
+    margin=dict(
+        l=35,
+        r=35,
+        b=35,
+        t=45
+    ),
+    hovermode="closest",
+    plot_bgcolor='#fffcfc',
+    paper_bgcolor='#fffcfc',
+    legend=dict(font=dict(size=10), orientation='h'),
+)
+layout_table['font-size'] = '12'
+layout_table['margin-top'] = '20'
+
+layout_map = dict(
+    autosize=True,
+    height=500,
+    font=dict(color="#191A1A"),
+    titlefont=dict(color="#191A1A", size='14'),
+    margin=dict(
+        l=35,
+        r=35,
+        b=35,
+        t=45
+    ),
+    hovermode="closest",
+    plot_bgcolor='#fffcfc',
+    paper_bgcolor='#fffcfc',
+    legend=dict(font=dict(size=10), orientation='h'),
+    title='SDC Datasets',
+    mapbox=dict(
+        accesstoken=mapbox_access_token,
+        # style="light",
+        center=dict(
+            lon=-95,
+            lat=39.7342
+        ),
+        zoom=1.5,
+    )
+)
 
 row = html.Div(
     [
@@ -171,7 +223,9 @@ row = html.Div(
                 html.Div(
                     [
                         html.Div(
-                            [html.H3("Place Map Here")],
+                            [dcc.Graph(id='map-graph',
+                                  style={'margin-top': '10'})
+                    ],
                             className="explore-sb-box header-h3",
                         ),
                     ],
@@ -180,7 +234,14 @@ row = html.Div(
                 html.Div(
                     [
                         html.Div(
-                            [html.H3("Keyword Selector Here"),],
+                        [html.Div('Select Science Center:'),
+                         html.Div(dcc.Checklist(
+                            id='sci_topic',
+                            options= [{'label': str(item),'value': str(item)} for item in set(df_map['sci_center'])],
+                            value= [item for item in set(df_map['sci_center'])]
+                            )
+                             )
+                    ],
                             className="explore-sb-box header-h3",
                         ),
                     ],
@@ -235,6 +296,8 @@ row = html.Div(
         # # END Layout for Select an Organization of Interest
     ]
 )
+
+
 
 # START Layout for Select a Date Range
 app.layout = html.Div(
@@ -299,10 +362,15 @@ def render_content(tab):
                     className="btn btn-success btn-sm download-listing align-right",
                 ),
                 dash_table.DataTable(
-                    id="table",
-                    columns=[{"name": i, "id": i} for i in df.columns],
-                    data=df.to_dict("records"),
-                ),
+                    id='datatable',
+                    columns=[{"name": i, "id": i} for i in ["sci_center", "beg_year"]],
+                    data=df_map.to_dict('records'),
+                    sort_action="native",
+                    sort_mode="multi",
+                    page_action="native",
+                    page_current= 0,
+                    page_size= 10,
+                    ),
                 dcc.Graph(
                     id="example-graph-2",
                     figure={
@@ -334,9 +402,50 @@ def render_content(tab):
         return html.Div(
             [
                 html.P("United States Countrywide Data", className="center-date-range-text"),
-                html.P("(Continental US included)"),
                 html.H4("Science Centers"),
-                
+                dcc.Link(
+                    "Browse These Data", href="#", className="browse-dr-link tab-link"
+                ),
+                html.H5("Full Details Listing", className="align-left"),
+                html.Button(
+                    "Download Data Table (CSV)",
+                    className="btn btn-success btn-sm download-listing align-right",
+                ),
+                dash_table.DataTable(
+                    id='datatable_US',
+                    columns=[{"name": i, "id": i} for i in ["sci_center", "beg_year"]],
+                    data=df_US.to_dict('records'),
+                    sort_action="native",
+                    sort_mode="multi",
+                    page_action="native",
+                    page_current= 0,
+                    page_size= 10,
+                    ),
+                dcc.Graph(
+                    id="example-graph-2",
+                    figure={
+                        "data": [
+                            {
+                                "x": [1, 2, 3],
+                                "y": [4, 1, 2],
+                                "type": "bar",
+                                "name": "SF",
+                            },
+                            {
+                                "x": [1, 2, 3],
+                                "y": [2, 4, 5],
+                                "type": "bar",
+                                "name": u"Montréal",
+                            },
+                        ],
+                        "layout": {"title": "Basic non interactive",},
+                    },
+                ),
+                dcc.Link(
+                    "Learn more about how these metrics are calculated.",
+                    href="#",
+                    className="learn-more-link align-left",
+                ),
             ]
         )
     elif tab == "tab-3":
@@ -344,11 +453,136 @@ def render_content(tab):
             [
                 html.P("Worldwide Data", className="center-date-range-text"),
                 html.H4("Science Centers"),
+                dcc.Link(
+                    "Browse These Data", href="#", className="browse-dr-link tab-link"
+                ),
+                html.H5("Full Details Listing", className="align-left"),
+                html.Button(
+                    "Download Data Table (CSV)",
+                    className="btn btn-success btn-sm download-listing align-right",
+                ),
+                dash_table.DataTable(
+                    id='datatable_earth',
+                    columns=[{"name": i, "id": i} for i in ["sci_center", "beg_year"]],
+                    data=df_US.to_dict('records'),
+                    sort_action="native",
+                    sort_mode="multi",
+                    page_action="native",
+                    page_current= 0,
+                    page_size= 10,
+                    ),
+                dcc.Graph(
+                    id="example-graph-2",
+                    figure={
+                        "data": [
+                            {
+                                "x": [1, 2, 3],
+                                "y": [4, 1, 2],
+                                "type": "bar",
+                                "name": "SF",
+                            },
+                            {
+                                "x": [1, 2, 3],
+                                "y": [2, 4, 5],
+                                "type": "bar",
+                                "name": u"Montréal",
+                            },
+                        ],
+                        "layout": {"title": "Basic non interactive",},
+                    },
+                ),
+                dcc.Link(
+                    "Learn more about how these metrics are calculated.",
+                    href="#",
+                    className="learn-more-link align-left",
+                ),
             ]
         )
 
 
 # START Layout for Tabbed Content
 # END Layout for Select a Date Range
+@app.callback(
+    Output('datatable', 'data'),
+    [Input('sci_topic', 'value')])
+def table_selection(sci_center):
+    if len(sci_center) == 0:
+        return no_update
+    df_ms = df_map.copy()
+    # df_ms = df_ms[df_ms['beg_year']< int(dates)]
+    df_ms = df_ms[df_ms['sci_center'].isin(sci_center)]
+    return df_ms.to_dict("records")
+def update_selected_row_indices(sci_center):
+    if len(sci_center) == 0:
+        return no_update
+    map_aux = df_map.copy()
+    # map_aux = map_aux[map_aux['beg_year'] < int(dates)]
+    map_aux = map_aux[map_aux["sci_center"].isin(sci_center)]
+    rows = map_aux.to_dict('records')
+    return rows
+
+@app.callback(
+    Output('datatable_US', 'data'),
+    [Input('sci_topic', 'value')])
+def table_selection2(sci_center):
+    if len(sci_center) == 0:
+        return no_update
+    df_ms = df_US.copy()
+    # df_ms = df_ms[df_ms['beg_year']< int(dates)]
+    df_ms = df_ms[df_ms['sci_center'].isin(sci_center)]
+    return df_ms.to_dict("records")
+def update_selected_row_indices2(sci_center):
+    if len(sci_center) == 0:
+        return no_update
+    map_aux = df_US.copy()
+    # map_aux = map_aux[map_aux['beg_year'] < int(dates)]
+    map_aux = map_aux[map_aux["sci_center"].isin(sci_center)]
+    rows = map_aux.to_dict('records')
+    return rows
+
+@app.callback(
+    Output('datatable_earth', 'data'),
+    [Input('sci_topic', 'value')])
+def table_selection3(sci_center):
+    if len(sci_center) == 0:
+        return no_update
+    df_ms = df_earth.copy()
+    df_ms = df_ms[df_ms['sci_center'].isin(sci_center)]
+    return df_ms.to_dict("records")
+def update_selected_row_indices3(sci_center):
+    if len(sci_center) == 0:
+        return no_update
+    map_aux = df_earth.copy()
+    map_aux = map_aux[map_aux["sci_center"].isin(sci_center)]
+    rows = map_aux.to_dict('records')
+    return rows
+
+
+@app.callback(
+    Output('map-graph', 'figure'),
+    [Input('datatable', 'data')])
+def map_selection(data):
+    aux = pd.DataFrame(data)
+    if len(data) == 0:
+        return no_update
+    else:
+        return {
+            "data": [{
+                    "type": "scattermapbox",
+                    "lat": list(aux['lat']),
+                    "lon": list(aux['lon']),
+                    "hoverinfo": "text",
+                    "hovertext": [["{}".format(i)]
+                                    for i in aux['sci_center']],
+                    "mode": "markers+text",
+                    "name": list(aux['sci_center']),
+                    "marker": {
+                        "size": 8,
+                        "opacity": 0.7
+                        },
+            }],
+            "layout": layout_map
+        }
+
 if __name__ == "__main__":
     app.run_server(debug=True, port = 8080)
