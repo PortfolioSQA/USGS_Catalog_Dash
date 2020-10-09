@@ -82,31 +82,40 @@ def create_dfs(sample_data):
     #date year as integer
     df2['end_year'] = df2['end_year'].astype(int)
     df2['beg_year'] = df2['beg_year'].astype(int)
+    #replace na Science Centers with "Undeteremined" & sort
+    df2.sci_center.fillna('Undeteremined', inplace=True)
+    df2.sort_values(by='sci_center', inplace = True)
     
-    ## df for tab 3
-    #global data (not the best way to find global data)
-    # placekeyword: world, earth, United States, Coterminous United States,continental united states, Asia, Africa
-    df_earth = df2[(df2['place_kw'] == 'World') | (df2['place_kw'] == 'Earth') | df2['place_kw'].str.contains('Africa') |
-                    df2['place_kw'].str.contains('Asia') | df2['place_kw'].str.contains('Greenland') | df2['place_kw'].str.contains('Brazil') |
-                    df2['place_kw'].str.contains('Nepal') | df2['place_kw'].str.contains('urope')]
+    # ## df for tab 3
+    # #global data (not the best way to find global data)
+    # # placekeyword: world, earth, United States, Coterminous United States,continental united states, Asia, Africa
+    # df_earth = df2[(df2['place_kw'] == 'World') | (df2['place_kw'] == 'Earth') | df2['place_kw'].str.contains('Africa') |
+    #                 df2['place_kw'].str.contains('Asia') | df2['place_kw'].str.contains('Greenland') | df2['place_kw'].str.contains('Brazil') |
+    #                 df2['place_kw'].str.contains('Nepal') | df2['place_kw'].str.contains('urope')]
     
-    ## df for tab 2
-    df_US = df2[(df2['place_kw'] == 'United States') | (df2['place_kw'] == 'United States of America') |
-                (df2['place_kw'] == 'Continental United States') | df2['place_kw'].str.contains('terminous')]
-    new = df2.merge(df_earth,on=['sci_center','descr', 'place_kw', 'lon', 'lat', 'kw', 'beg_year'],how='left')
+    # ## df for tab 2
+    # df_US = df2[(df2['place_kw'] == 'United States') | (df2['place_kw'] == 'United States of America') |
+    #             (df2['place_kw'] == 'Continental United States') | df2['place_kw'].str.contains('terminous')]
+    # new = df2.merge(df_earth,on=['sci_center','descr', 'place_kw', 'lon', 'lat', 'kw', 'beg_year'],how='left')
     
-    # non-global data with date
-    df_continent = new[new.end_year_y.isnull()]
-    df_continent.drop('end_year_y', axis=1, inplace=True)
+    # # non-global data with date
+    # df_continent = new[new.end_year_y.isnull()]
+    # df_continent.drop('end_year_y', axis=1, inplace=True)
     
-    #mappable data (not US or global)
-    new2 = df_continent.merge(df_US,on=['sci_center','descr', 'place_kw', 'lon', 'lat', 'kw', 'beg_year'],how='left')
+    # #mappable data (not US or global)
+    # new2 = df_continent.merge(df_US,on=['sci_center','descr', 'place_kw', 'lon', 'lat', 'kw', 'beg_year'],how='left')
     
-    ## df for tab 1
-    df_map= new2[new2.end_year.isnull()]
-    df_map.drop('end_year', axis=1, inplace=True)
+    # ## df for tab 1
+    # df_map= new2[new2.end_year.isnull()]
+    # df_map.drop('end_year', axis=1, inplace=True)
     
-    return df_map, df_US, df_earth
+    return df2
+
+# sample_data = pd.read_csv('sdc_sample.csv')
+# df_map = create_dfs(sample_data)
+# SC = set(df_map['sci_center'])
+# sorted_SC = sorted(SC)
+
 
 # sample_data = pd.read_csv('sdc_sample.csv')
 # df_map, df_US, df_earth = create_dfs(sample_data)

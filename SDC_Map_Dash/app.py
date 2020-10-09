@@ -1,7 +1,7 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from etl import create_dfs
 from dash.dash import no_update
 
@@ -18,9 +18,15 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.config['suppress_callback_exceptions'] = True
 
 mapbox_access_token = 'pk.eyJ1Ijoic2RjLWRhc2giLCJhIjoiY2tmMzZqb21vMDA2ejJ1cGdjeDg5OGRiOCJ9.alrKKaVlRO4DIJmMWYY1WQ'
+
 #load data
 sample_data = pd.read_csv('sdc_sample.csv')
-df_map, df_US, df_earth = create_dfs(sample_data)
+df_map = create_dfs(sample_data)
+
+# get a set of sorted science centers
+SC = set(df_map['sci_center'])
+sorted_SC = sorted(SC)
+
 
 # USGS & ScienceBase Headers and Footers
 app.index_string = """
@@ -78,7 +84,7 @@ app.index_string = """
 		<div class="row clearIt">
 		  <div class="col-md-12 top-section">
 			<h1>Map Query Dashboard</h1>
-			<p>Select and map datasets by date and keyword(s). Note that US and global data are provided in separate tabs below.<br>
+			<p>Map datasets and view aggregate statistics by Science Data Center or keyword.<br>
 			<a href="#">Learn more about how these metrics are calculated. </a></p>
 			 <p>Questions? Contact us at: <a href="mailto:sashaqanderson@gmail.com">sashaqanderson@gmail.com</a></p>
 		  </div>
@@ -196,16 +202,18 @@ layout_map = dict(
         l=35,
         r=35,
         b=35,
-        t=45
+        t=35
     ),
     hovermode="closest",
     plot_bgcolor='#fffcfc',
     paper_bgcolor='#fffcfc',
+    # color_discrete_sequence = [{'label': str(item),'value': str(item)}
+    #                                   for item in set(df_map['sci_center'])],
     legend=dict(font=dict(size=10), orientation='h'),
-    title='SDC Datasets',
+    # title='SDC Datasets',
     mapbox=dict(
         accesstoken=mapbox_access_token,
-        # style="light",
+        style="light",
         center=dict(
             lon=-95,
             lat=39.7342
@@ -214,12 +222,16 @@ layout_map = dict(
     )
 )
 
+
+
+
+
 row = html.Div(
     [
         # START Layout for Data by
         html.Div(
             [
-                dbc.Col(html.Div("Insert a date selector here", className="explore-sb-row-h2",), lg=12),
+                dbc.Col(html.Div(html.Div(id='live-update-text'), className="explore-sb-row-h2",), lg=12),
                 html.Div(
                     [
                         html.Div(
@@ -229,23 +241,37 @@ row = html.Div(
                             className="explore-sb-box header-h3",
                         ),
                     ],
-                    className="col-lg-8 col-md-8 col-sm-12",
+                    className="col-lg-6 col-md-6 col-sm-12",
                 ),
                 html.Div(
                     [
                         html.Div(
-                        [html.Div('Select Science Center:'),
-                         html.Div(dcc.Checklist(
+                    [html.Div('Select Science Center:'),
+                        dcc.Dropdown(
                             id='sci_topic',
-                            options= [{'label': str(item),'value': str(item)} for item in set(df_map['sci_center'])],
-                            value= [item for item in set(df_map['sci_center'])]
-                            )
-                             )
+                            style={
+                                'height': '2px', 
+                                # 'width': '100px', 
+                                'font-size': "75%",
+                                'min-height': '1px',
+                                },
+                            options= [{'label': 'All Science Centers', 'value': 'all'}] + [{'label': str(item),'value': str(item)}
+                                      for item in sorted_SC],
+                            value= 'all')
                     ],
                             className="explore-sb-box header-h3",
                         ),
+                    html.Div(
+                        [
+                    html.Div('Enter a keyword and press submit'),
+                    html.Div(dcc.Input(id='kw', type='text')),
+                    html.Button('Submit', id='button'),
+                    html.Div(id='output-container-button')
+                ],
+                className="explore-sb-box header-h3",
+                             ),
                     ],
-                    className="col-lg-4 col-md-4 col-sm-12",
+                    className="col-lg-6 col-md-6 col-sm-12",
                 ),
             ],
             className="row clearIt bg-light explore-sb-row",
@@ -372,7 +398,7 @@ def render_content(tab):
                     page_size= 10,
                     ),
                 dcc.Graph(
-                    id="example-graph-2",
+                    id="example-graph-1",
                     figure={
                         "data": [
                             {
@@ -472,7 +498,7 @@ def render_content(tab):
                     page_size= 10,
                     ),
                 dcc.Graph(
-                    id="example-graph-2",
+                    id="example-graph-3",
                     figure={
                         "data": [
                             {
@@ -502,6 +528,23 @@ def render_content(tab):
 
 # START Layout for Tabbed Content
 # END Layout for Select a Date Range
+
+@app.callback(
+    Output('live-update-text', 'children'),
+    [Input('sci_topic', 'value')])
+def set_display_livedata(sci_topic):
+    #connect to database and obtain blood pressure where id=value
+    df = df_map.copy()
+    if sci_topic == 'all':
+        df2 = df.copy()
+        row_ct = len(df2) 
+        return f'Total Dataset Count: {row_ct}'
+    else:
+        df2 = df[df['sci_center']==sci_topic]
+        row_ct = len(df2) 
+        return f'{sci_topic}: {row_ct}'
+
+
 @app.callback(
     Output('datatable', 'data'),
     [Input('sci_topic', 'value')])
@@ -509,17 +552,22 @@ def table_selection(sci_center):
     if len(sci_center) == 0:
         return no_update
     df_ms = df_map.copy()
-    # df_ms = df_ms[df_ms['beg_year']< int(dates)]
-    df_ms = df_ms[df_ms['sci_center'].isin(sci_center)]
-    return df_ms.to_dict("records")
+    if sci_center == 'all':
+        return df_ms.to_dict("records")
+    else:
+        df_ms = df_ms[df_ms['sci_center']==sci_center]
+        return df_ms.to_dict("records")
 def update_selected_row_indices(sci_center):
     if len(sci_center) == 0:
         return no_update
     map_aux = df_map.copy()
-    # map_aux = map_aux[map_aux['beg_year'] < int(dates)]
-    map_aux = map_aux[map_aux["sci_center"].isin(sci_center)]
+    map_aux = map_aux[map_aux["sci_center"]==sci_center]
     rows = map_aux.to_dict('records')
     return rows
+
+
+
+
 
 @app.callback(
     Output('datatable_US', 'data'),
@@ -535,7 +583,6 @@ def update_selected_row_indices2(sci_center):
     if len(sci_center) == 0:
         return no_update
     map_aux = df_US.copy()
-    # map_aux = map_aux[map_aux['beg_year'] < int(dates)]
     map_aux = map_aux[map_aux["sci_center"].isin(sci_center)]
     rows = map_aux.to_dict('records')
     return rows
