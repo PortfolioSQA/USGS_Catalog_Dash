@@ -5,10 +5,12 @@ from dash.dependencies import Input, Output, State
 from etl import create_dfs
 from dash.dash import no_update
 
-
 import dash_bootstrap_components as dbc
 import dash_table
 import pandas as pd
+from wordcloud import WordCloud, STOPWORDS 
+from io import BytesIO
+import base64
 
 # sample data
 df = pd.read_csv("solar.csv")
@@ -27,6 +29,26 @@ df_map = create_dfs(sample_data)
 SC = set(df_map['sci_center'])
 sorted_SC = sorted(SC)
 
+# helper function to plot wordcloud
+def plot_wordcloud(data):
+    df = pd.DataFrame(data)
+    comment_words = '' 
+    stopwords = set(STOPWORDS) 
+    # iterate through the csv file 
+    for val in df.all_kw: 
+        # typecaste each val to string 
+        val = str(val) 
+        # split the value 
+        tokens = val.split() 
+        # Converts each token into lowercase 
+        for i in range(len(tokens)): 
+            tokens[i] = tokens[i].lower() 
+        comment_words += " ".join(tokens)+" "  
+        wordcloud = WordCloud(width = 580, height = 280, 
+                    background_color ='white', 
+                    stopwords = stopwords, 
+                    min_font_size = 10).generate(comment_words) 
+    return wordcloud.to_image()
 
 # USGS & ScienceBase Headers and Footers
 app.index_string = """
@@ -195,7 +217,7 @@ layout_table['margin-top'] = '20'
 
 layout_map = dict(
     autosize=True,
-    height=500,
+    height=700,
     font=dict(color="#191A1A"),
     titlefont=dict(color="#191A1A", size='14'),
     margin=dict(
@@ -210,23 +232,19 @@ layout_map = dict(
     # color_discrete_sequence = [{'label': str(item),'value': str(item)}
     #                                   for item in set(df_map['sci_center'])],
     legend=dict(font=dict(size=10), orientation='h'),
-    # title='SDC Datasets',
     mapbox=dict(
         accesstoken=mapbox_access_token,
         style="light",
         center=dict(
-            lon=-95,
-            lat=39.7342
+            lon=-115,
+            lat=40
         ),
-        zoom=1.5,
+        zoom=1.6,
     )
 )
 
 
-
-
-
-row = html.Div(
+app.layout = html.Div(
     [
         # START Layout for Data by
         html.Div(
@@ -246,7 +264,7 @@ row = html.Div(
                 html.Div(
                     [
                         html.Div(
-                    [html.Div('Select Science Center:'),
+                    [html.Div('Select an organization of interest:'),
                         dcc.Dropdown(
                             id='sci_topic',
                             style={
@@ -259,351 +277,183 @@ row = html.Div(
                                       for item in sorted_SC],
                             value= 'all')
                     ],
-                            className="explore-sb-box header-h3",
+                    className="explore-sb-box header-h3",
                         ),
                     html.Div(
                         [
-                    html.Div('Enter a keyword and press submit'),
-                    html.Div(dcc.Input(id='kw', type='text')),
-                    html.Button('Submit', id='button'),
-                    html.Div(id='output-container-button')
-                ],
-                className="explore-sb-box header-h3",
+                            html.Div('Enter a keyword and press submit'),
+                            html.Div(dcc.Input(id='kw', type='text')),
+                            html.Button('Submit', type='submit', id='button', n_clicks=0),
+                            html.Div(id='output-container-button')
+                            ],
+                    className="explore-sb-box header-h3",
+                        ),
+                    html.Div(
+                        [
+                            html.Div(html.Img(id='wc',
+                                               style={'margin-top': '6'})),
+                            ],
+                    className="explore-sb-box header-h3",
                              ),
                     ],
                     className="col-lg-6 col-md-6 col-sm-12",
-                ),
-            ],
+                    ),
+                ],
             className="row clearIt bg-light explore-sb-row",
         ),
-        # END Layout for Data by
-        # START Layout for Select an Organization of Interest
-        # html.Div(
-        #     [
-        #         dbc.Col(
-        #             html.Div(
-        #                 "Select an Organization of Interest",
-        #                 className="explore-sb-row-h2",
-        #             ),
-        #             lg=12,
-        #         ),
-        #         html.Div(
-        #             [
-        #                 html.Div(
-        #                     [
-        #                         html.H3("Total Data Published"),
-        #                         html.P("3043", className="textHeader"),
-        #                         dcc.Link(
-        #                             "Browse These Data",
-        #                             href="#",
-        #                             className="browse-dr-link",
-        #                         ),
-        #                     ],
-        #                     className="explore-sb-box header-h3",
-        #                 ),
-        #             ],
-        #             className="col-lg-6 col-md-6 col-sm-12",
-        #         ),
-        #         html.Div(
-        #             [
-        #                 html.Div(
-        #                     [
-        #                         html.H3("Current Data In-Progress"),
-        #                         html.P("177", className="textHeader"),
-        #                     ],
-        #                     className="explore-sb-box header-h3",
-        #                 ),
-        #             ],
-        #             className="col-lg-6 col-md-6 col-sm-12",
-        #         ),
-        #     ],
-        #     className="row clearIt bg-light explore-sb-row",
-        # ),
-        # # END Layout for Select an Organization of Interest
-    ]
-)
-
-
-
-# START Layout for Select a Date Range
-app.layout = html.Div(
-    [
-        row,
-        # START Layout for Tabbed Content
-        dbc.Row(
+        html.Div(
             [
-                # dbc.Col(
-                #     html.Div("Data and Statistics", className="explore-sb-row-h2",),
-                #     width=12,
-                # ),
-                dcc.Tabs(
-                    id="tabs-with-classes",
-                    value="tab-1",
-                    parent_className="custom-tabs",
-                    className="custom-tabs-container",
-                    children=[
-                        dcc.Tab(
-                            label="Mapped Data & Statitics",
-                            value="tab-1",
-                            className="custom-tab",
-                            selected_className="custom-tab--selected",
-                        ),
-                        dcc.Tab(
-                            label="United States Data & Statistics",
-                            value="tab-2",
-                            className="custom-tab",
-                            selected_className="custom-tab--selected",
-                        ),
-                        dcc.Tab(
-                            label="Global Data & Statistics",
-                            value="tab-3",
-                            className="custom-tab",
-                            selected_className="custom-tab--selected",
-                        ),
-                    ],
-                ),
-                html.Div(id="tabs-content-classes"),
-            ],
-            className="row clearIt bg-light explore-sb-row",
-        ),
-    ]
-)
-
-
-@app.callback(
-    Output("tabs-content-classes", "children"), [Input("tabs-with-classes", "value")]
-)
-def render_content(tab):
-    if tab == "tab-1":
-        return html.Div(
-            [
-                html.P("Mapped Data", className="center-date-range-text"),
-                html.H4("Science Centers"),
+                html.H4("SDC Dataset Results"),
                 dcc.Link(
                     "Browse These Data", href="#", className="browse-dr-link tab-link"
                 ),
-                html.H5("Full Details Listing", className="align-left"),
                 html.Button(
                     "Download Data Table (CSV)",
                     className="btn btn-success btn-sm download-listing align-right",
                 ),
                 dash_table.DataTable(
                     id='datatable',
-                    columns=[{"name": i, "id": i} for i in ["sci_center", "beg_year"]],
+                    columns=[{"name": i, "id": i} for i in ["sci_center", "title", "beg_year", "end_year"]],
                     data=df_map.to_dict('records'),
+                    style_cell_conditional=[
+                        {'if': {'column_id': 'beg_year'},
+                          'width': '10%',
+                          'textAlign': 'center'},
+                        {'if': {'column_id': 'end_year'},
+                          'width': '10%',
+                          'textAlign': 'center'},
+                        {'if': {'column_id': 'sci_center'},
+                          'width': '20%'}
+                    ],
+                    style_cell={
+                        'overflow': 'hidden',
+                        # 'textOverflow': 'ellipsis',
+                        'maxWidth': '60px',
+                        'height': 'auto'
+                    },
+                    style_table={
+                        'maxHeight': '700px',
+                        'overflowY': 'scroll'
+                    },
+                        style_data={
+                        'whiteSpace': 'normal',
+                        'height': 'auto',
+                        'lineHeight': '15px'
+                    },
                     sort_action="native",
                     sort_mode="multi",
-                    page_action="native",
-                    page_current= 0,
-                    page_size= 10,
+                    # page_action="native",
+                    # page_current= 0,
+                    # page_size= 10,
+                    # row_selectable="multi",
+                    # selected_rows=[],
                     ),
-                dcc.Graph(
-                    id="example-graph-1",
-                    figure={
-                        "data": [
-                            {
-                                "x": [1, 2, 3],
-                                "y": [4, 1, 2],
-                                "type": "bar",
-                                "name": "SF",
-                            },
-                            {
-                                "x": [1, 2, 3],
-                                "y": [2, 4, 5],
-                                "type": "bar",
-                                "name": u"Montréal",
-                            },
-                        ],
-                        "layout": {"title": "Basic non interactive",},
-                    },
-                ),
-                dcc.Link(
-                    "Learn more about how these metrics are calculated.",
-                    href="#",
-                    className="learn-more-link align-left",
-                ),
+                # dcc.Graph(
+                #     id="example-graph-1",
+                #     figure={
+                #         "data": [
+                #             {
+                #                 "x": [1, 2, 3],
+                #                 "y": [4, 1, 2],
+                #                 "type": "bar",
+                #                 "name": "SF",
+                #             },
+                #             {
+                #                 "x": [1, 2, 3],
+                #                 "y": [2, 4, 5],
+                #                 "type": "bar",
+                #                 "name": u"Montréal",
+                #             },
+                #         ],
+                #         "layout": {"title": "Statistics",},
+                #     },
+                # ),
+                # dcc.Link(
+                #     "Learn more about how these metrics are calculated.",
+                #     href="#",
+                #     className="learn-more-link align-left",
+                # ),
             ]
         )
-    elif tab == "tab-2":
-        return html.Div(
-            [
-                html.P("United States Countrywide Data", className="center-date-range-text"),
-                html.H4("Science Centers"),
-                dcc.Link(
-                    "Browse These Data", href="#", className="browse-dr-link tab-link"
-                ),
-                html.H5("Full Details Listing", className="align-left"),
-                html.Button(
-                    "Download Data Table (CSV)",
-                    className="btn btn-success btn-sm download-listing align-right",
-                ),
-                dash_table.DataTable(
-                    id='datatable_US',
-                    columns=[{"name": i, "id": i} for i in ["sci_center", "beg_year"]],
-                    data=df_US.to_dict('records'),
-                    sort_action="native",
-                    sort_mode="multi",
-                    page_action="native",
-                    page_current= 0,
-                    page_size= 10,
-                    ),
-                dcc.Graph(
-                    id="example-graph-2",
-                    figure={
-                        "data": [
-                            {
-                                "x": [1, 2, 3],
-                                "y": [4, 1, 2],
-                                "type": "bar",
-                                "name": "SF",
-                            },
-                            {
-                                "x": [1, 2, 3],
-                                "y": [2, 4, 5],
-                                "type": "bar",
-                                "name": u"Montréal",
-                            },
-                        ],
-                        "layout": {"title": "Basic non interactive",},
-                    },
-                ),
-                dcc.Link(
-                    "Learn more about how these metrics are calculated.",
-                    href="#",
-                    className="learn-more-link align-left",
-                ),
-            ]
-        )
-    elif tab == "tab-3":
-        return html.Div(
-            [
-                html.P("Worldwide Data", className="center-date-range-text"),
-                html.H4("Science Centers"),
-                dcc.Link(
-                    "Browse These Data", href="#", className="browse-dr-link tab-link"
-                ),
-                html.H5("Full Details Listing", className="align-left"),
-                html.Button(
-                    "Download Data Table (CSV)",
-                    className="btn btn-success btn-sm download-listing align-right",
-                ),
-                dash_table.DataTable(
-                    id='datatable_earth',
-                    columns=[{"name": i, "id": i} for i in ["sci_center", "beg_year"]],
-                    data=df_US.to_dict('records'),
-                    sort_action="native",
-                    sort_mode="multi",
-                    page_action="native",
-                    page_current= 0,
-                    page_size= 10,
-                    ),
-                dcc.Graph(
-                    id="example-graph-3",
-                    figure={
-                        "data": [
-                            {
-                                "x": [1, 2, 3],
-                                "y": [4, 1, 2],
-                                "type": "bar",
-                                "name": "SF",
-                            },
-                            {
-                                "x": [1, 2, 3],
-                                "y": [2, 4, 5],
-                                "type": "bar",
-                                "name": u"Montréal",
-                            },
-                        ],
-                        "layout": {"title": "Basic non interactive",},
-                    },
-                ),
-                dcc.Link(
-                    "Learn more about how these metrics are calculated.",
-                    href="#",
-                    className="learn-more-link align-left",
-                ),
-            ]
-        )
+    ]
+)
 
-
-# START Layout for Tabbed Content
-# END Layout for Select a Date Range
+#______________________________________________________________________________
 
 @app.callback(
     Output('live-update-text', 'children'),
-    [Input('sci_topic', 'value')])
-def set_display_livedata(sci_topic):
+    [Input('sci_topic', 'value'),
+     Input('button', 'n_clicks')],
+    [State('kw', 'value')])
+def set_display_livedata(sci_topic, click, state):
     #connect to database and obtain blood pressure where id=value
     df = df_map.copy()
-    if sci_topic == 'all':
+    if sci_topic == 'all' and (click == 0 or state == ''):
         df2 = df.copy()
         row_ct = len(df2) 
         return f'Total Dataset Count: {row_ct}'
-    else:
+    if sci_topic == 'all' and click > 0 and state != '':
+        df_temp = df[df['all_kw'].notna()]
+        df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
+        row_ct = len(df_kw) 
+        return f'{sci_topic} Results for {state}: {row_ct}'  
+    if sci_topic != 'all' and click > 0 and state != '':
+        df2 = df[df['sci_center']==sci_topic]
+        df_temp = df2[df2['all_kw'].notna()]
+        df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
+        row_ct = len(df_kw) 
+        return f'{sci_topic} Results for {state}: {row_ct}'  
+    if sci_topic != 'all' and (click == 0 or state == ''):
         df2 = df[df['sci_center']==sci_topic]
         row_ct = len(df2) 
-        return f'{sci_topic}: {row_ct}'
+        return f'{sci_topic} Results: {row_ct}'
 
 
 @app.callback(
     Output('datatable', 'data'),
-    [Input('sci_topic', 'value')])
-def table_selection(sci_center):
-    if len(sci_center) == 0:
+    [Input('sci_topic', 'value'),
+     Input('button', 'n_clicks')],
+    [State('kw', 'value')])
+def table_selection(sci_center, click, state):
+    if (len(sci_center) == 0) and click == 0:
         return no_update
     df_ms = df_map.copy()
-    if sci_center == 'all':
+    if sci_center == 'all' and click > 0 and state != '':
+        df_temp = df_ms[df_ms['all_kw'].notna()]
+        df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
+        return df_kw.to_dict("records")
+    if sci_center == 'all' and (click == 0 or state == ''):
         return df_ms.to_dict("records")
+    if sci_center != 'all' and (click == 0 or state == ''):
+        df_sc = df_ms.loc[df_ms['sci_center']==sci_center]
+        return df_sc.to_dict("records")
+    if sci_center != 'all' and click > 0 and state != '':
+        df_sc = df_ms[df_ms['sci_center']==sci_center]
+        df_temp = df_sc[df_sc['kw'].notna()]
+        df_kw = df_temp[df_temp['all_kw'].str.contains(state)]
+        return df_kw.to_dict("records")
     else:
-        df_ms = df_ms[df_ms['sci_center']==sci_center]
+        return no_update
+def update_selected_row_indices(sci_center, click, state):
+    if (len(sci_center) == 0) and click == 0:
+        return no_update
+    df_ms = df_map.copy()
+    if sci_center == 'all' and click > 0:
+        df_temp = df_ms[df_ms['all_kw'].notna()]
+        df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
+        return df_kw.to_dict("records")
+    if sci_center == 'all' and (click == 0 or state == ''):
         return df_ms.to_dict("records")
-def update_selected_row_indices(sci_center):
-    if len(sci_center) == 0:
+    if sci_center != 'all' and (click == 0 or state == ''):
+        df_sc = df_ms.loc[df_ms['sci_center']==sci_center]
+        return df_sc.to_dict("records")
+    if sci_center != 'all' and click > 0:
+        df_sc = df_ms[df_ms['sci_center']==sci_center]
+        df_temp = df_sc[df_sc['all_kw'].notna()]
+        df_kw = df_temp[df_temp['all_kw'].str.contains(state)]
+        return df_kw.to_dict("records")
+    else:
         return no_update
-    map_aux = df_map.copy()
-    map_aux = map_aux[map_aux["sci_center"]==sci_center]
-    rows = map_aux.to_dict('records')
-    return rows
-
-
-
-
-
-@app.callback(
-    Output('datatable_US', 'data'),
-    [Input('sci_topic', 'value')])
-def table_selection2(sci_center):
-    if len(sci_center) == 0:
-        return no_update
-    df_ms = df_US.copy()
-    # df_ms = df_ms[df_ms['beg_year']< int(dates)]
-    df_ms = df_ms[df_ms['sci_center'].isin(sci_center)]
-    return df_ms.to_dict("records")
-def update_selected_row_indices2(sci_center):
-    if len(sci_center) == 0:
-        return no_update
-    map_aux = df_US.copy()
-    map_aux = map_aux[map_aux["sci_center"].isin(sci_center)]
-    rows = map_aux.to_dict('records')
-    return rows
-
-@app.callback(
-    Output('datatable_earth', 'data'),
-    [Input('sci_topic', 'value')])
-def table_selection3(sci_center):
-    if len(sci_center) == 0:
-        return no_update
-    df_ms = df_earth.copy()
-    df_ms = df_ms[df_ms['sci_center'].isin(sci_center)]
-    return df_ms.to_dict("records")
-def update_selected_row_indices3(sci_center):
-    if len(sci_center) == 0:
-        return no_update
-    map_aux = df_earth.copy()
-    map_aux = map_aux[map_aux["sci_center"].isin(sci_center)]
-    rows = map_aux.to_dict('records')
-    return rows
-
 
 @app.callback(
     Output('map-graph', 'figure'),
@@ -620,7 +470,7 @@ def map_selection(data):
                     "lon": list(aux['lon']),
                     "hoverinfo": "text",
                     "hovertext": [["{}".format(i)]
-                                    for i in aux['sci_center']],
+                        for i in aux['title'].str[:75]],
                     "mode": "markers+text",
                     "name": list(aux['sci_center']),
                     "marker": {
@@ -630,6 +480,16 @@ def map_selection(data):
             }],
             "layout": layout_map
         }
+
+    
+@app.callback(
+    Output('wc', 'src'),
+    [Input('datatable', 'data')])
+def make_wordcloud(data):
+    if data:
+        img = BytesIO()
+        plot_wordcloud(data).save(img, format='PNG')
+        return 'data:image/png;base64,{}'.format(base64.b64encode(img.getvalue()).decode())
 
 if __name__ == "__main__":
     app.run_server(debug=True, port = 8080)
