@@ -44,7 +44,7 @@ def plot_wordcloud(data):
         for i in range(len(tokens)): 
             tokens[i] = tokens[i].lower() 
         comment_words += " ".join(tokens)+" "  
-        wordcloud = WordCloud(width = 580, height = 280, 
+        wordcloud = WordCloud(width = 580, height = 300, 
                     background_color ='white', 
                     stopwords = stopwords, 
                     min_font_size = 10).generate(comment_words) 
@@ -105,8 +105,8 @@ app.index_string = """
 		<!-- BEGIN SDC_App Image and Header Content -->
 		<div class="row clearIt">
 		  <div class="col-md-12 top-section">
-			<h1>Map Query Dashboard</h1>
-			<p>Map datasets and view aggregate statistics by Science Data Center or keyword.<br>
+			<h1>Science Data Catalog Summary Dashboard</h1>
+			<p>Map and view dataset counts by Science Data Center and/or keyword.<br>
 			<a href="#">Learn more about how these metrics are calculated. </a></p>
 			 <p>Questions? Contact us at: <a href="mailto:sashaqanderson@gmail.com">sashaqanderson@gmail.com</a></p>
 		  </div>
@@ -229,8 +229,6 @@ layout_map = dict(
     hovermode="closest",
     plot_bgcolor='#fffcfc',
     paper_bgcolor='#fffcfc',
-    # color_discrete_sequence = [{'label': str(item),'value': str(item)}
-    #                                   for item in set(df_map['sci_center'])],
     legend=dict(font=dict(size=10), orientation='h'),
     mapbox=dict(
         accesstoken=mapbox_access_token,
@@ -240,6 +238,9 @@ layout_map = dict(
             lat=40
         ),
         zoom=1.6,
+        #Use these when updating the zoom level w/ datatable
+        # uirevision=True,
+        # autosize=True,
     )
 )
 
@@ -264,24 +265,24 @@ app.layout = html.Div(
                 html.Div(
                     [
                         html.Div(
-                    [html.Div('Select an organization of interest:'),
-                        dcc.Dropdown(
-                            id='sci_topic',
-                            style={
-                                'height': '2px', 
-                                # 'width': '100px', 
-                                'font-size': "75%",
-                                'min-height': '1px',
-                                },
-                            options= [{'label': 'All Science Centers', 'value': 'all'}] + [{'label': str(item),'value': str(item)}
-                                      for item in sorted_SC],
-                            value= 'all')
-                    ],
+                            [html.Div('Select an organization of interest:'),
+                                dcc.Dropdown(
+                                    id='sci_topic',
+                                    style={
+                                        'height': '2px', 
+                                        # 'width': '100px', 
+                                        'font-size': "75%",
+                                        'min-height': '1px',
+                                        },
+                                    options= [{'label': 'All Science Centers', 'value': 'all'}] + [{'label': str(item),'value': str(item)}
+                                              for item in sorted_SC],
+                                    value= 'all')
+                            ],
                     className="explore-sb-box header-h3",
                         ),
-                    html.Div(
+                        html.Div(
                         [
-                            html.Div('Enter a keyword and press submit'),
+                        html.Div('Search by keyword'),
                             html.Div(dcc.Input(id='kw', type='text')),
                             html.Button('Submit', type='submit', id='button', n_clicks=0),
                             html.Div(id='output-container-button')
@@ -304,17 +305,20 @@ app.layout = html.Div(
         html.Div(
             [
                 html.H4("SDC Dataset Results"),
-                dcc.Link(
-                    "Browse These Data", href="#", className="browse-dr-link tab-link"
-                ),
                 html.Button(
                     "Download Data Table (CSV)",
                     className="btn btn-success btn-sm download-listing align-right",
                 ),
                 dash_table.DataTable(
                     id='datatable',
-                    columns=[{"name": i, "id": i} for i in ["sci_center", "title", "beg_year", "end_year"]],
+                    # columns=[{"name": i, "id": i} for i in ["sci_center", "title", "beg_year", "end_year"]],
                     data=df_map.to_dict('records'),
+                    columns=[
+                    {"name": ["Science Center"], "id": "sci_center"},
+                    {"name": ["Dataset Title"], "id": "title"},
+                    {"name": ["Beginning Date (idinfo)"], "id": "beg_year"},
+                    {"name": ["End Date (idinfo)"], "id": "end_year"},
+                    ],
                     style_cell_conditional=[
                         {'if': {'column_id': 'beg_year'},
                           'width': '10%',
@@ -325,6 +329,11 @@ app.layout = html.Div(
                         {'if': {'column_id': 'sci_center'},
                           'width': '20%'}
                     ],
+                    style_header= {
+                        'whiteSpace':'normal',
+                        'backgroundColor': 'white',
+                        'fontWeight': 'bold'
+                    },
                     style_cell={
                         'overflow': 'hidden',
                         # 'textOverflow': 'ellipsis',
@@ -332,7 +341,7 @@ app.layout = html.Div(
                         'height': 'auto'
                     },
                     style_table={
-                        'maxHeight': '700px',
+                        'maxHeight': '600px',
                         'overflowY': 'scroll'
                     },
                         style_data={
@@ -393,17 +402,20 @@ def set_display_livedata(sci_topic, click, state):
         row_ct = len(df2) 
         return f'Total Dataset Count: {row_ct}'
     if sci_topic == 'all' and click > 0 and state != '':
+        df2 = df.copy()
         df_temp = df[df['all_kw'].notna()]
         df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
         row_ct = len(df_kw) 
         return f'{sci_topic} Results for {state}: {row_ct}'  
     if sci_topic != 'all' and click > 0 and state != '':
+        df2 = df.copy()
         df2 = df[df['sci_center']==sci_topic]
         df_temp = df2[df2['all_kw'].notna()]
         df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
         row_ct = len(df_kw) 
         return f'{sci_topic} Results for {state}: {row_ct}'  
     if sci_topic != 'all' and (click == 0 or state == ''):
+        df2 = df.copy()
         df2 = df[df['sci_center']==sci_topic]
         row_ct = len(df2) 
         return f'{sci_topic} Results: {row_ct}'
@@ -417,41 +429,48 @@ def set_display_livedata(sci_topic, click, state):
 def table_selection(sci_center, click, state):
     if (len(sci_center) == 0) and click == 0:
         return no_update
-    df_ms = df_map.copy()
+    df3 = df_map.copy()
+    if sci_center == 'all' and (click == 0 or state == ''):
+        df2 = df3.copy()
+        return df2.to_dict("records")
     if sci_center == 'all' and click > 0 and state != '':
-        df_temp = df_ms[df_ms['all_kw'].notna()]
+        df2 = df3.copy()
+        df_temp = df2[df2['all_kw'].notna()]
         df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
         return df_kw.to_dict("records")
-    if sci_center == 'all' and (click == 0 or state == ''):
-        return df_ms.to_dict("records")
-    if sci_center != 'all' and (click == 0 or state == ''):
-        df_sc = df_ms.loc[df_ms['sci_center']==sci_center]
-        return df_sc.to_dict("records")
     if sci_center != 'all' and click > 0 and state != '':
-        df_sc = df_ms[df_ms['sci_center']==sci_center]
+        df2 = df3.copy()
+        df_sc = df2[df2['sci_center']==sci_center]
         df_temp = df_sc[df_sc['kw'].notna()]
         df_kw = df_temp[df_temp['all_kw'].str.contains(state)]
         return df_kw.to_dict("records")
+    if sci_center != 'all' and (click == 0 or state == ''):
+        df2 = df3.copy()
+        df_sc = df2.loc[df2['sci_center']==sci_center]
+        return df_sc.to_dict("records")
     else:
         return no_update
 def update_selected_row_indices(sci_center, click, state):
     if (len(sci_center) == 0) and click == 0:
         return no_update
-    df_ms = df_map.copy()
-    if sci_center == 'all' and click > 0:
-        df_temp = df_ms[df_ms['all_kw'].notna()]
+    df4 = df_map.copy()
+    if sci_center == 'all' and (click == 0 or state == ''):
+        return df4.to_dict("records")
+    if sci_center == 'all' and click > 0 and state != '':
+        df2 = df4.copy()
+        df_temp = df2[df2['all_kw'].notna()]
         df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
         return df_kw.to_dict("records")
-    if sci_center == 'all' and (click == 0 or state == ''):
-        return df_ms.to_dict("records")
-    if sci_center != 'all' and (click == 0 or state == ''):
-        df_sc = df_ms.loc[df_ms['sci_center']==sci_center]
-        return df_sc.to_dict("records")
-    if sci_center != 'all' and click > 0:
-        df_sc = df_ms[df_ms['sci_center']==sci_center]
+    if sci_center != 'all' and click > 0 and state != '':
+        df2 = df4.copy()
+        df_sc = df2[df2['sci_center']==sci_center]
         df_temp = df_sc[df_sc['all_kw'].notna()]
         df_kw = df_temp[df_temp['all_kw'].str.contains(state)]
         return df_kw.to_dict("records")
+    if sci_center != 'all' and (click == 0 or state == ''):
+        df2 = df4.copy()
+        df_sc = df2.loc[df2['sci_center']==sci_center]
+        return df_sc.to_dict("records")
     else:
         return no_update
 
@@ -475,7 +494,8 @@ def map_selection(data):
                     "name": list(aux['sci_center']),
                     "marker": {
                         "size": 8,
-                        "opacity": 0.7
+                        "opacity": 0.7,
+                        # "color": aux['sci_center'],
                         },
             }],
             "layout": layout_map
@@ -484,12 +504,17 @@ def map_selection(data):
     
 @app.callback(
     Output('wc', 'src'),
-    [Input('datatable', 'data')])
-def make_wordcloud(data):
+    [Input('datatable', 'data'),
+     Input('sci_topic', 'value')])
+def make_wordcloud(data, sci_center):
     if data:
-        img = BytesIO()
-        plot_wordcloud(data).save(img, format='PNG')
-        return 'data:image/png;base64,{}'.format(base64.b64encode(img.getvalue()).decode())
+        if sci_center == 'all':
+            
+            return r'/assets/images/all_image.png'
+        else:
+            img = BytesIO()
+            plot_wordcloud(data).save(img, format='PNG')
+            return 'data:image/png;base64,{}'.format(base64.b64encode(img.getvalue()).decode())
 
 if __name__ == "__main__":
     app.run_server(debug=True, port = 8080)

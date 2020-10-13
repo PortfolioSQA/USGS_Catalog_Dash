@@ -36,6 +36,20 @@ def create_dfs(sample_data):
     
     df2 = df_wc[['datasource.displayname', 'description', 'idinfoBegdate', 'idinfoCaldate', 'idinfoEnddate',
             'all_kw', 'usgsThesaurusKeyword', 'lon', 'lat', 'title']].copy()
+    
+    #keywords to lower case
+    df2["all_kw"] = df2["all_kw"].str.lower()
+    
+    #remove words from keyword column (USGS etc)
+    remove_words = ['usgs', 'gt']
+    pat = r'\b(?:{})\b'.format('|'.join(remove_words))
+
+    df2['all_kw'] = df2['all_kw'].str.replace(pat, '')
+    #remove punctuation from keyword column
+    df2["all_kw"] = df2['all_kw'].str.replace('[^\w\s]',' ')  
+    df2['all_kw'] = df2['all_kw'].str.replace('[\d]', '')
+    #strip trailing whitespaces
+    df2 = df2.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
 
     # fill NA in beg/end date with CalDate and convert to integer
     df2.idinfoBegdate.fillna(df2.idinfoCaldate, inplace=True)
@@ -78,6 +92,9 @@ def create_dfs(sample_data):
 
 # sample_data = pd.read_csv('sdc_sample.csv')
 # df = create_dfs(sample_data)
+
+
+# .remove.remove_punctuation(text: df['all_kw'][2])
  
 # eco = ['ecosystem', 'ecology', 'ecol', 'eco']
 # org = ['species', 'biological', 'plants', 'animal', 'species', 'fish', 'wildlife', 'birds', 'diversity', 'habitat', 'population']
