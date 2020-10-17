@@ -39,16 +39,14 @@ def create_dfs(sample_data):
     
     #keywords to lower case
     df2["all_kw"] = df2["all_kw"].str.lower()
-    
-    #remove words from keyword column (USGS etc)
+    #remove words from keyword column (USGS etc) for Wordcloud
     remove_words = ['usgs', 'gt']
     pat = r'\b(?:{})\b'.format('|'.join(remove_words))
-
     df2['all_kw'] = df2['all_kw'].str.replace(pat, '')
     #remove punctuation from keyword column
     df2["all_kw"] = df2['all_kw'].str.replace('[^\w\s]',' ')  
     df2['all_kw'] = df2['all_kw'].str.replace('[\d]', '')
-    #strip trailing whitespaces
+    #strip trailing whitespaces etc
     df2 = df2.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
 
     # fill NA in beg/end date with CalDate and convert to integer
@@ -84,8 +82,8 @@ def create_dfs(sample_data):
     df2['end_year'] = df2['end_year'].astype(int)
     df2['beg_year'] = df2['beg_year'].astype(int)
     
-    #replace na Science Centers with "Undeteremined" & sort
-    df2.sci_center.fillna('Undeteremined', inplace=True)
+    #replace na Science Centers with "Undetermined" & sort
+    df2.sci_center.fillna('Undetermined', inplace=True)
     df2.sort_values(by='sci_center', inplace = True)
 
     return df2

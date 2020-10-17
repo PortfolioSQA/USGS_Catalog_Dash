@@ -11,6 +11,7 @@ import pandas as pd
 from wordcloud import WordCloud, STOPWORDS 
 from io import BytesIO
 import base64
+import urllib
 
 # sample data
 df = pd.read_csv("solar.csv")
@@ -211,13 +212,14 @@ layout_table = dict(
     plot_bgcolor='#fffcfc',
     paper_bgcolor='#fffcfc',
     legend=dict(font=dict(size=10), orientation='h'),
+    export_format="csv",
 )
 layout_table['font-size'] = '12'
 layout_table['margin-top'] = '20'
 
 layout_map = dict(
     autosize=True,
-    height=700,
+    height=590,
     font=dict(color="#191A1A"),
     titlefont=dict(color="#191A1A", size='14'),
     margin=dict(
@@ -239,11 +241,10 @@ layout_map = dict(
         ),
         zoom=1.6,
         #Use these when updating the zoom level w/ datatable
-        # uirevision=True,
-        # autosize=True,
+        uirevision=True,
+        autosize=True,
     )
 )
-
 
 app.layout = html.Div(
     [
@@ -264,8 +265,11 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     [
-                        html.Div(
-                            [html.Div('Select an organization of interest:'),
+                    #     html.Div(
+                    # className="explore-sb-box header-h3",
+                    #     ),
+                    html.Div(
+                        [html.Div('Select an organization of interest:'),
                                 dcc.Dropdown(
                                     id='sci_topic',
                                     style={
@@ -276,26 +280,25 @@ app.layout = html.Div(
                                         },
                                     options= [{'label': 'All Science Centers', 'value': 'all'}] + [{'label': str(item),'value': str(item)}
                                               for item in sorted_SC],
-                                    value= 'all')
-                            ],
-                    className="explore-sb-box header-h3",
-                        ),
-                        html.Div(
-                        [
+                                    value= 'all'),
+                        html.P(),
+                        html.Br(),
                         html.Div('Search by keyword'),
-                            html.Div(dcc.Input(id='kw', type='text')),
-                            html.Button('Submit', type='submit', id='button', n_clicks=0),
-                            html.Div(id='output-container-button')
-                            ],
-                    className="explore-sb-box header-h3",
-                        ),
-                    html.Div(
-                        [
-                            html.Div(html.Img(id='wc',
-                                               style={'margin-top': '6'})),
-                            ],
+                        html.Div(dcc.Input(id='kw', type='text')),
+                        html.Button('Submit', type='submit', id='button', n_clicks=0),
+                        html.Div(id='output-container-button')
+                        ],
                     className="explore-sb-box header-h3",
                              ),
+                    html.Div(
+                    dcc.Loading(id='loading-1',
+                        children=[html.Div(html.Img(id='wc',
+                                                style={'margin-top': '6'})),
+                            ],
+                        type='default'),
+
+                    className="explore-sb-box header-h3",
+                             ),   
                     ],
                     className="col-lg-6 col-md-6 col-sm-12",
                     ),
@@ -304,14 +307,18 @@ app.layout = html.Div(
         ),
         html.Div(
             [
-                html.H4("SDC Dataset Results"),
-                html.Button(
-                    "Download Data Table (CSV)",
-                    className="btn btn-success btn-sm download-listing align-right",
+                html.H4("Science Data Catalog Results"),
+                html.A(
+                    "Download Data Table (CSV)", id = 'download-button', 
+                    download="data.csv",
+                    href="",
+                    target="_blank",
+                    # className="btn btn-success btn-sm download-listing align-right",
                 ),
+                dcc.Loading(id='loading-2',
+                        children=[html.Div(
                 dash_table.DataTable(
                     id='datatable',
-                    # columns=[{"name": i, "id": i} for i in ["sci_center", "title", "beg_year", "end_year"]],
                     data=df_map.to_dict('records'),
                     columns=[
                     {"name": ["Science Center"], "id": "sci_center"},
@@ -356,7 +363,8 @@ app.layout = html.Div(
                     # page_size= 10,
                     # row_selectable="multi",
                     # selected_rows=[],
-                    ),
+                    )
+                )], type = "default"),
                 # dcc.Graph(
                 #     id="example-graph-1",
                 #     figure={
@@ -389,6 +397,27 @@ app.layout = html.Div(
 
 #______________________________________________________________________________
 
+def filter_data(sci_center, click, state):
+    df3 = df_map.copy()
+    if sci_center == 'all' and (click == 0 or state == ''):
+        df2 = df3.copy()
+        return df2
+    if sci_center == 'all' and click > 0 and state != '':
+        df2 = df3.copy()
+        df_temp = df2[df2['all_kw'].notna()]
+        df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
+        return df_kw
+    if sci_center != 'all' and click > 0 and state != '':
+        df2 = df3.copy()
+        df2 = df3[df3['sci_center']==sci_center]
+        df_temp = df2[df2['all_kw'].notna()]
+        df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
+        return df_kw
+    if sci_center != 'all' and (click == 0 or state == ''):
+        df2 = df3.copy()
+        df_sc = df2.loc[df2['sci_center']==sci_center]
+        return df_sc
+
 @app.callback(
     Output('live-update-text', 'children'),
     [Input('sci_topic', 'value'),
@@ -406,20 +435,19 @@ def set_display_livedata(sci_topic, click, state):
         df_temp = df[df['all_kw'].notna()]
         df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
         row_ct = len(df_kw) 
-        return f'{sci_topic} Results for {state}: {row_ct}'  
+        return f'All results for {state}: {row_ct}'  
     if sci_topic != 'all' and click > 0 and state != '':
         df2 = df.copy()
         df2 = df[df['sci_center']==sci_topic]
         df_temp = df2[df2['all_kw'].notna()]
         df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
         row_ct = len(df_kw) 
-        return f'{sci_topic} Results for {state}: {row_ct}'  
+        return f'{sci_topic} results for {state}: {row_ct}'  
     if sci_topic != 'all' and (click == 0 or state == ''):
         df2 = df.copy()
         df2 = df[df['sci_center']==sci_topic]
         row_ct = len(df2) 
         return f'{sci_topic} Results: {row_ct}'
-
 
 @app.callback(
     Output('datatable', 'data'),
@@ -429,50 +457,15 @@ def set_display_livedata(sci_topic, click, state):
 def table_selection(sci_center, click, state):
     if (len(sci_center) == 0) and click == 0:
         return no_update
-    df3 = df_map.copy()
-    if sci_center == 'all' and (click == 0 or state == ''):
-        df2 = df3.copy()
-        return df2.to_dict("records")
-    if sci_center == 'all' and click > 0 and state != '':
-        df2 = df3.copy()
-        df_temp = df2[df2['all_kw'].notna()]
-        df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
-        return df_kw.to_dict("records")
-    if sci_center != 'all' and click > 0 and state != '':
-        df2 = df3.copy()
-        df_sc = df2[df2['sci_center']==sci_center]
-        df_temp = df_sc[df_sc['kw'].notna()]
-        df_kw = df_temp[df_temp['all_kw'].str.contains(state)]
-        return df_kw.to_dict("records")
-    if sci_center != 'all' and (click == 0 or state == ''):
-        df2 = df3.copy()
-        df_sc = df2.loc[df2['sci_center']==sci_center]
-        return df_sc.to_dict("records")
-    else:
-        return no_update
+    df3 = filter_data(sci_center, click, state)
+    return df3.to_dict("records")
+
 def update_selected_row_indices(sci_center, click, state):
     if (len(sci_center) == 0) and click == 0:
         return no_update
-    df4 = df_map.copy()
-    if sci_center == 'all' and (click == 0 or state == ''):
-        return df4.to_dict("records")
-    if sci_center == 'all' and click > 0 and state != '':
-        df2 = df4.copy()
-        df_temp = df2[df2['all_kw'].notna()]
-        df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
-        return df_kw.to_dict("records")
-    if sci_center != 'all' and click > 0 and state != '':
-        df2 = df4.copy()
-        df_sc = df2[df2['sci_center']==sci_center]
-        df_temp = df_sc[df_sc['all_kw'].notna()]
-        df_kw = df_temp[df_temp['all_kw'].str.contains(state)]
-        return df_kw.to_dict("records")
-    if sci_center != 'all' and (click == 0 or state == ''):
-        df2 = df4.copy()
-        df_sc = df2.loc[df2['sci_center']==sci_center]
-        return df_sc.to_dict("records")
-    else:
-        return no_update
+    df4 = filter_data(sci_center, click, state)
+    return df4.to_dict("records")
+
 
 @app.callback(
     Output('map-graph', 'figure'),
@@ -489,32 +482,43 @@ def map_selection(data):
                     "lon": list(aux['lon']),
                     "hoverinfo": "text",
                     "hovertext": [["{}".format(i)]
-                        for i in aux['title'].str[:75]],
+                        for i in aux['title'].str[:90]],
                     "mode": "markers+text",
                     "name": list(aux['sci_center']),
                     "marker": {
                         "size": 8,
                         "opacity": 0.7,
-                        # "color": aux['sci_center'],
+                        # "color": list(aux['sci_center']),
                         },
             }],
             "layout": layout_map
         }
-
     
 @app.callback(
     Output('wc', 'src'),
     [Input('datatable', 'data'),
-     Input('sci_topic', 'value')])
-def make_wordcloud(data, sci_center):
+     Input('sci_topic', 'value'),
+     Input('button', 'n_clicks')],
+    [State('kw', 'value')])
+def make_wordcloud(data, sci_center, click, state):
     if data:
-        if sci_center == 'all':
+        if sci_center == 'all' and (click == 0 or state == ''):
             
             return r'/assets/images/all_image.png'
         else:
             img = BytesIO()
             plot_wordcloud(data).save(img, format='PNG')
             return 'data:image/png;base64,{}'.format(base64.b64encode(img.getvalue()).decode())
+
+@app.callback(Output('download-button', 'href'), 
+              [Input('datatable', 'data')])
+def update_download_link(data):
+    dff = pd.DataFrame(data)
+    # df5 = 
+    csv_string = dff.to_csv(index=False, encoding='utf-8')
+    csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
+    return csv_string
+
 
 if __name__ == "__main__":
     app.run_server(debug=True, port = 8080)
