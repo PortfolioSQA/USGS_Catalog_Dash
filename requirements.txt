@@ -3,4 +3,3 @@ dash-bootstrap-components
 cookiecutter
 pandas
 wordcloud
-urllib
