@@ -1,0 +1,11 @@
+version: '3.5'
+
+services:
+  dashapp:
+    restart: always
+    build: .
+    command: gunicorn app:server -b 0.0.0.0:5555
+    volumes:
+      - .:/src/
+    ports:
+      - "5555:5555"
