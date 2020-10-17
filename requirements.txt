@@ -3,5 +3,4 @@ dash-bootstrap-components
 cookiecutter
 pandas
 wordcloud
-base64
 urllib
