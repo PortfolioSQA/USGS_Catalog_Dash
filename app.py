@@ -4,6 +4,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from etl import create_dfs
 from dash.dash import no_update
+import flask
 
 import dash_bootstrap_components as dbc
 import dash_table
@@ -13,8 +14,10 @@ from io import BytesIO
 import base64
 import urllib
 
+server = flask.Flask('app')
+
 # sample data
-df = pd.read_csv("solar.csv")
+# df = pd.read_csv("solar.csv")
 
 external_stylesheets = [dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
