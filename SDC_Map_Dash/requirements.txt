@@ -1,8 +1,0 @@
-dash
-dash-bootstrap-components
-cookiecutter
-pandas
-wordcloud
-io
-base64
-urllib
