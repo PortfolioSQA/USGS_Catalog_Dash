@@ -16,9 +16,6 @@ import urllib
 
 server = flask.Flask('app')
 
-# sample data
-# df = pd.read_csv("solar.csv")
-
 external_stylesheets = [dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server
@@ -255,7 +252,10 @@ app.layout = html.Div(
         # START Layout for Data by
         html.Div(
             [
-                dbc.Col(html.Div(html.Div(id='live-update-text'), className="explore-sb-row-h2",), lg=12),
+                dbc.Col(dcc.Loading(id='loading-3',
+                        children=
+                    html.Div(html.Div(id='live-update-text'), className="explore-sb-row-h2",))
+                    , lg=12),
                 html.Div(
                     [
                         html.Div(
@@ -492,7 +492,7 @@ def map_selection(data):
                     "marker": {
                         "size": 8,
                         "opacity": 0.7,
-                        # "color": list(aux['sci_center']),
+                        "color": list(aux['colors']),
                         },
             }],
             "layout": layout_map
