@@ -492,7 +492,7 @@ def map_selection(data):
                     "marker": {
                         "size": 8,
                         "opacity": 0.7,
-                        "color": list(aux['colors']),
+                        #"color": list(aux['sci_center']),
                         },
             }],
             "layout": layout_map
