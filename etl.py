@@ -89,26 +89,26 @@ def create_dfs(sample_data):
     #This code is for the static sample data!!!!!!
     #I need to fix it to  reactively add more/less colors based on db science centers???
     # create a list of colors for each science center
-    scs = df2.sci_center.unique()
-    colors = ["#cc6666", "#663333", "#cc9999", "#f22000", "#8c3123", "#cc8166", "#ffd0bf", "#bf4d00", "#592400", "#402310", 
-              "#f2aa79", "#806c60", "#d97400", "#734b1d", "#ffaa00", "#bf8f30", "#332b1a", "#ffd940", "#665c33", "#b3aa86", 
-              "#8c8523", "#fffbbf", "#c2f200", "#334000", "#e5ff80", "#5d8c00", "#61f200", "#91e673", "#d0ffbf", "#688060", 
-              "#16a600", "#1a661a", "#003307", "#20402d", "#00f281", "#73e6b0", "#bfffe1"," #008055", "#1a6657", "#608079", 
-              "#00ccbe", "#8fbfbc", "#008f99", "#003c40", "#80e6ff", "#335c66", "#00aaff", "#002b40", "#86a4b3", "#303a40", 
-              "#007ae6", "#4d7599", "#b6cef2", "#001140", "#1a2e66", "#4d6199", "#001180", "#3043bf", "#434659", "#a099cc", 
-              "#14004d", "#5200cc", "#8c40ff", "#b380ff", "#241a33", "#4e3366", "#a159b3", "#daace6", "#796080", "#b300bf", 
-              "#3c0040", "#73006b", "#ff00cc", "#ff80e5", "#33001b", "#e63995", "#a6537f", "#592d44", "#4d3944", "#73002e", 
-              "#e6acc3", "#e5003d", "#bf3056", "#ff80a2", "#806068", "#401016", "#663341", "#400011", "#994d61", "#2e0073",
-              "#1a0040"]
+#     scs = df2.sci_center.unique()
+#     colors = ["#cc6666", "#663333", "#cc9999", "#f22000", "#8c3123", "#cc8166", "#ffd0bf", "#bf4d00", "#592400", "#402310", 
+#               "#f2aa79", "#806c60", "#d97400", "#734b1d", "#ffaa00", "#bf8f30", "#332b1a", "#ffd940", "#665c33", "#b3aa86", 
+#               "#8c8523", "#fffbbf", "#c2f200", "#334000", "#e5ff80", "#5d8c00", "#61f200", "#91e673", "#d0ffbf", "#688060", 
+#               "#16a600", "#1a661a", "#003307", "#20402d", "#00f281", "#73e6b0", "#bfffe1"," #008055", "#1a6657", "#608079", 
+#               "#00ccbe", "#8fbfbc", "#008f99", "#003c40", "#80e6ff", "#335c66", "#00aaff", "#002b40", "#86a4b3", "#303a40", 
+#               "#007ae6", "#4d7599", "#b6cef2", "#001140", "#1a2e66", "#4d6199", "#001180", "#3043bf", "#434659", "#a099cc", 
+#               "#14004d", "#5200cc", "#8c40ff", "#b380ff", "#241a33", "#4e3366", "#a159b3", "#daace6", "#796080", "#b300bf", 
+#               "#3c0040", "#73006b", "#ff00cc", "#ff80e5", "#33001b", "#e63995", "#a6537f", "#592d44", "#4d3944", "#73002e", 
+#               "#e6acc3", "#e5003d", "#bf3056", "#ff80a2", "#806068", "#401016", "#663341", "#400011", "#994d61", "#2e0073",
+#               "#1a0040"]
     
-    df3 = pd.DataFrame()
-    df3['scs'] = scs
-    df3['colors'] = colors
+#     df3 = pd.DataFrame()
+#     df3['scs'] = scs
+#     df3['colors'] = colors
     
-    df4 = pd.merge(df2,df3,left_on=['sci_center'], right_on = ['scs'], how = 'left')
-    df4.pop("scs")
+#     df4 = pd.merge(df2,df3,left_on=['sci_center'], right_on = ['scs'], how = 'left')
+#     df4.pop("scs")
 
-    return df4
+    return df2
 
 # sample_data = pd.read_csv('sdc_sample.csv')
 # df = create_dfs(sample_data)
