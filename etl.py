@@ -8,6 +8,37 @@ Created on Sat Sep 26 13:24:41 2020
 
 import datetime
 import pandas as pd
+import numpy as np
+
+def Convert_to_String(string):
+    if isinstance(string, str):
+        string = string.replace("'", "") 
+        string = string.replace("[", "") 
+        string = string.replace("]", "") 
+        li = list(string.split(", "))
+        str1 = ' '.join(li)
+        return str1
+    else:
+        return ''
+
+def Convert_to_List(string):
+    if isinstance(string, str):
+        string = string.replace("'", "") 
+        string = string.replace("[", "") 
+        string = string.replace("]", "") 
+        li = list(string.split(", "))
+        return li
+    else:
+        return []
+
+def f(row):
+    val = Convert_to_String(row['usgsThesaurusKeyword'])
+    return val 
+
+def g(row):
+    val = Convert_to_List(row['usgsThesaurusKeyword'])
+    return val
+
 
 def create_dfs(sample_data):
     # Drop rows with no location for mapping 
@@ -37,6 +68,11 @@ def create_dfs(sample_data):
     df2 = df_wc[['datasource.displayname', 'description', 'idinfoBegdate', 'idinfoCaldate', 'idinfoEnddate',
             'all_kw', 'usgsThesaurusKeyword', 'lon', 'lat', 'title']].copy()
     
+    #make usgs keywords a list of strings (was a string of a list) for the directory and a clean string for search
+    df2["usgsThesaurusKeyword"] = df2["usgsThesaurusKeyword"].str.lower()
+    df2['usgsThesString'] = df2.apply(f, axis=1)
+    # df2['usgsThesList'] = df2.apply(g, axis=1) works at the end for some reason, not here
+    
     #keywords to lower case
     df2["all_kw"] = df2["all_kw"].str.lower()
     #remove words from keyword column (USGS etc) for Wordcloud
@@ -44,7 +80,7 @@ def create_dfs(sample_data):
     pat = r'\b(?:{})\b'.format('|'.join(remove_words))
     df2['all_kw'] = df2['all_kw'].str.replace(pat, '')
     #remove punctuation from keyword column
-    df2["all_kw"] = df2['all_kw'].str.replace('[^\w\s]',' ')  
+    df2["all_kw"] = df2['all_kw'].str.replace('[^\w\s]',' ')
     df2['all_kw'] = df2['all_kw'].str.replace('[\d]', '')
     #strip trailing whitespaces etc
     df2 = df2.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
@@ -65,8 +101,9 @@ def create_dfs(sample_data):
   
     #clean up columns
     df2.drop(['idinfoBegdate', 'idinfoEnddate', 'idinfoCaldate'], axis=1, inplace=True)
-    df2.columns = ['sci_center', 'descr', 'all_kw', 'kw', 'lon', 'lat', 'title', 'beg_year', 'end_year']
-    
+    df2.columns = ['sci_center', 'descr', 'all_kw',
+       'usgsThesaurusKeyword', 'lon', 'lat', 'title', 'usgsThesString',
+       'beg_year', 'end_year']
     #eplace beg_date with 1900 and end date with present year for null date values
     df2['beg_year'].replace(['nan'], '1900', inplace=True)
     df2['beg_year'].replace(['Unkn'], '1900', inplace=True)
@@ -85,36 +122,45 @@ def create_dfs(sample_data):
     #replace na Science Centers with "Undetermined" & sort
     df2.sci_center.fillna('Undetermined', inplace=True)
     df2.sort_values(by='sci_center', inplace = True)
-    
-    #This code is for the static sample data!!!!!!
-    #I need to fix it to  reactively add more/less colors based on db science centers???
-    # create a list of colors for each science center
-#     scs = df2.sci_center.unique()
-#     colors = ["#cc6666", "#663333", "#cc9999", "#f22000", "#8c3123", "#cc8166", "#ffd0bf", "#bf4d00", "#592400", "#402310", 
-#               "#f2aa79", "#806c60", "#d97400", "#734b1d", "#ffaa00", "#bf8f30", "#332b1a", "#ffd940", "#665c33", "#b3aa86", 
-#               "#8c8523", "#fffbbf", "#c2f200", "#334000", "#e5ff80", "#5d8c00", "#61f200", "#91e673", "#d0ffbf", "#688060", 
-#               "#16a600", "#1a661a", "#003307", "#20402d", "#00f281", "#73e6b0", "#bfffe1"," #008055", "#1a6657", "#608079", 
-#               "#00ccbe", "#8fbfbc", "#008f99", "#003c40", "#80e6ff", "#335c66", "#00aaff", "#002b40", "#86a4b3", "#303a40", 
-#               "#007ae6", "#4d7599", "#b6cef2", "#001140", "#1a2e66", "#4d6199", "#001180", "#3043bf", "#434659", "#a099cc", 
-#               "#14004d", "#5200cc", "#8c40ff", "#b380ff", "#241a33", "#4e3366", "#a159b3", "#daace6", "#796080", "#b300bf", 
-#               "#3c0040", "#73006b", "#ff00cc", "#ff80e5", "#33001b", "#e63995", "#a6537f", "#592d44", "#4d3944", "#73002e", 
-#               "#e6acc3", "#e5003d", "#bf3056", "#ff80a2", "#806068", "#401016", "#663341", "#400011", "#994d61", "#2e0073",
-#               "#1a0040"]
-    
-#     df3 = pd.DataFrame()
-#     df3['scs'] = scs
-#     df3['colors'] = colors
-    
-#     df4 = pd.merge(df2,df3,left_on=['sci_center'], right_on = ['scs'], how = 'left')
-#     df4.pop("scs")
 
+    df2['usgsThesList'] = df2.apply(g, axis=1)
     return df2
 
+def flatten_list(_2d_list):
+    flat_list = []
+    # Iterate through the outer list
+    for element in _2d_list:
+        if type(element) is list:
+            # If the element is of type list, iterate through the sublist
+            for item in element:
+                flat_list.append(item)
+        else:
+            flat_list.append(element)
+    return flat_list
+
 # sample_data = pd.read_csv('sdc_sample.csv')
-# df = create_dfs(sample_data)
+# df_map = create_dfs(sample_data)
+
+# # get a set of sorted science centers
+# SC = set(df_map['sci_center'])
+# sorted_SC = sorted(SC)
 
 
+# print(df_map.columns)
+# # df_map['usgsThesList'] = df_map.apply(g, axis=1)
+# print(df_map['usgsThesList'])
+# print(type(df_map['usgsThesList']))
 
+# joined_list = df_map.usgsThesList.tolist()
+# usgs_thes_short = flatten_list(joined_list)
+# usgs_thes_short = set(usgs_thes_short)
+# usgs_thes_short = sorted(usgs_thes_short)
+# print(usgs_thes_short)
+
+
+# df3 = df_map[df_map['usgsThesString'].notna()]
+# df_th = df3.loc[df3['usgsThesString'].str.contains('wildlife')] 
+# df_th
 # .remove.remove_punctuation(text: df['all_kw'][2])
  
 # eco = ['ecosystem', 'ecology', 'ecol', 'eco']
