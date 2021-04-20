@@ -2,5 +2,6 @@ dash
 dash-bootstrap-components
 cookiecutter
 pandas
+numpy
 wordcloud
 gunicorn
