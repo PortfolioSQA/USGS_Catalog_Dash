@@ -389,14 +389,14 @@ app.layout = html.Div(
                         'font-family':'sans-serif'
                     },
                     style_table={
-                        'maxHeight': '600px',
+                        'maxHeight': '560px',
                         'overflowY': 'scroll',
                         'maxWidth': '97%'
                     },
                     style_data={
                         'whiteSpace': 'normal',
                         'height': 'auto',
-                        'lineHeight': '15px'
+                        'lineHeight': '16px'
                     },
                     style_data_conditional=[
                     {
@@ -477,8 +477,9 @@ def filter_data(thes_topic, click, state):
 def table_selection(thes_topic, click, state):
     if (len(thes_topic) == 0) and (click == 0 or state == ''):
         return df_map.to_dict("records")
-    df3 = filter_data(thes_topic, click, state)
-    return df3.to_dict("records")
+    else:
+        df3 = filter_data(thes_topic, click, state)
+        return df3.to_dict("records")
 
 def update_selected_row_indices(thes_topic, click, state):
     if (len(thes_topic) == 0) and click == 0:
@@ -502,7 +503,7 @@ def map_selection(data):
                     "lon": list(aux['lon']),
                     "hoverinfo": "text",
                     "hovertext": [["{}".format(i)]
-                        for i in aux['title'].str[:90]],
+                        for i in aux['title'].str[:125]],
                     "mode": "markers+text",
                     "name": list(aux['sci_center']),
                     "marker": {
