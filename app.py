@@ -522,7 +522,7 @@ def map_selection(data):
     [State('kw', 'value')])
 def make_wordcloud(data, thes_topic, click, state):
     if data:
-        if thes_topic == '' and (click == 0 or state == ''):
+        if len(thes_topic) == 0 and (click == 0 or state == ''):
             return r'/assets/images/all_image2.png'
         else:
             img = BytesIO()
