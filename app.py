@@ -28,42 +28,12 @@ mapbox_access_token = 'pk.eyJ1Ijoic2RjLWRhc2giLCJhIjoiY2tmMzZqb21vMDA2ejJ1cGdjeD
 sample_data = pd.read_csv('sdc_sample.csv')
 df_map = create_dfs(sample_data)
 
-# get a set of sorted science centers
-SC = set(df_map['sci_center'])
-sorted_SC = sorted(SC)
-
+# get a set of sorted USGS thesaurus kw
 joined_list = df_map.usgsThesList.tolist()
 usgs_thes_short = flatten_list(joined_list)
 usgs_thes_short = set(usgs_thes_short)
 usgs_thes_short = sorted(usgs_thes_short)
 
-
-
-# usgs_thes_short = ['stream discharge', 'stream-gage measurement', 'streamflow', 'freshwater ecosystems', 'field monitoring stations',
-#                    'datasets', 'mathematical modeling', 'biological soil crusts', 'coal ash', 'microplastic contamination', 
-#                    'Mesoproterozoic', 'Paleoproterozoic', 'platinum-group elements', 'produced water', 'slag', 'solid industrial waste material']
-# usgs_thes_short = sorted(usgs_thes_short)
-
-# helper function to plot wordcloud
-def plot_wordcloud(data):
-    df = pd.DataFrame(data)
-    comment_words = '' 
-    stopwords = set(STOPWORDS) 
-    # iterate through the csv file 
-    for val in df.all_kw: 
-        # typecaste each val to string 
-        val = str(val) 
-        # split the value 
-        tokens = val.split() 
-        # Converts each token into lowercase 
-        for i in range(len(tokens)): 
-            tokens[i] = tokens[i].lower() 
-        comment_words += " ".join(tokens)+" "  
-        wordcloud = WordCloud(width = 1240, height = 200, 
-                    background_color ='white', 
-                    stopwords = stopwords, 
-                    min_font_size = 10).generate(comment_words) 
-    return wordcloud.to_image()
 
 # USGS & ScienceBase Headers and Footers
 app.index_string = """
@@ -108,7 +78,7 @@ app.index_string = """
 	<div class="col-12">
 		<div class="nav-background clearIt">	
 		<nav class="navbar navbar-light">
-		<a class="sb navbar-brand" href="#"><img src="../assets/images/powered_by_sb.png" alt="Powered by SDC_App" /> Science Data Center</a>
+		<a class="sb navbar-brand" href="#"><img src="../assets/images/powered_by_sb.png" alt="Powered by SDC_App" /> Science Data Catalog (SDC)</a>
 		</nav>	
 		</div>	
 	</div>
@@ -120,9 +90,8 @@ app.index_string = """
 		<!-- BEGIN SDC_App Image and Header Content -->
 		<div class="row clearIt">
 		  <div class="col-md-12 top-section">
-			<h1>Science Data Catalog Summary Dashboard</h1>
-			<p>Map and view dataset counts by Science Data Center and/or keyword.<br>
-			<a href="#">Learn more about how these metrics are calculated. </a></p>
+			<h1>Explore SDC by keyword and view by location</h1>
+			<p>Filter and map data sets by one or more keywords. For example, if you select the USGS Thesaurus Keyword "Aerial Photography" and type in "vegetation", the search is for both "Aerial Photography" AND "vegetation." You may remove a keyword from the search by deselecting the word from the dropdown menu or deleting the text in textbox search and clicking "Submit."<br>
 			 <p>Questions? Contact us at: <a href="mailto:sashaqanderson@gmail.com">sashaqanderson@gmail.com</a></p>
 		  </div>
 		</div>
@@ -146,7 +115,7 @@ app.index_string = """
 			  </center>
 			</div>
 			<div class="col-md-4 col-sm-4 col-xs-4 updates">Version: 0.0.1 <br />
-			  Last Updated: Tuesday, August 17, 2019 </div>
+			  Last Updated: Saturday, April 24, 2021 </div>
 		  </div>
 		</div>
 	  </div><!-- closing div for USGS VisId main content -->  
@@ -253,7 +222,7 @@ layout_map = dict(
             lon=-115,
             lat=37
         ),
-        zoom=1.7,
+        zoom=1.8,
         #Use these when updating the zoom level w/ datatable
         uirevision=True,
         autosize=True,
@@ -265,10 +234,6 @@ app.layout = html.Div(
         # START Layout for Data by
         html.Div(
             [
-                # dbc.Col(dcc.Loading(id='loading-3',
-                #         children=
-                #     html.Div(html.Div(id='live-update-text'), className="explore-sb-row-h2",))
-                #     , lg=12),
                 html.Div(
                     [
                     html.Div(
@@ -287,15 +252,17 @@ app.layout = html.Div(
                                     clearable=True),
                         html.P(),
                         html.Br(),
-                        html.Div('Or type in any keyword'),
+                        html.Div('Type Any Keyword:'),
                         html.Div(dcc.Input(id='kw', type='text')),
                         html.Button('Submit', type='submit', id='button', n_clicks=0),
-                        html.Div(id='output-container-button')
+                        html.Div(id='output-container-button'),
+                        dbc.Col(dcc.Loading(id='loading-3',
+                        children=
+                        html.Div(html.Div(id='live-update-text'), className="explore-sb-row-h2",)), lg=12),
                         ],
                     className="explore-sb-row-h2",
                              ),
                     ],
-                    # className="col-lg-12 col-md-6 col-sm-12",
                     className="col-lg-12 col-sm-4 col-sm-8",
                 ),
                 html.Div(
@@ -429,45 +396,78 @@ def filter_data(thes_topic, click, state):
         df2 = df2[df2['all_kw'].notna()]
         df2 = df2[df2['usgsThesString'].notna()]
         df2 = df2.loc[df2['all_kw'].str.contains(state)]
-        df2 = df2.loc[df2['usgsThesString'].str.contains(thes_topic[0])]  
-        print(len(thes_topic))
+        for i in thes_topic:
+            df2 = df2.loc[df2['usgsThesString'].str.contains(i)]  
         return df2
     if len(thes_topic) != 0 and (click == 0 or state == ''):
         df2 = df3.copy()
         df2 = df2[df2['usgsThesString'].notna()]
-        df_th = df2.loc[df2['usgsThesString'].str.contains(thes_topic[0])] 
+        for i in thes_topic:
+            df_th = df2.loc[df2['usgsThesString'].str.contains(i)]  
         return df_th
 
-# @app.callback(
-#     Output('live-update-text', 'children'),
-#     [Input('thes_topic', 'value'),
-#      Input('button', 'n_clicks')],
-#     [State('kw', 'value')])
-# def set_display_livedata(thes_topic, click, state):
-#     #connect to database and obtain blood pressure where id=value
-#     df = df_map.copy()
-#     if thes_topic == 'all' and (click == 0 or state == ''):
-#         df2 = df.copy()
-#         row_ct = len(df2) 
-#         return f'Total Dataset Count: {row_ct}'
-#     if thes_topic == 'all' and click > 0 and state != '':
-#         df2 = df.copy()
-#         df_temp = df[df['all_kw'].notna()]
-#         df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
-#         row_ct = len(df_kw) 
-#         return f'All results for {state}: {row_ct}'  
-#     if thes_topic != 'all' and click > 0 and state != '':
-#         df2 = df.copy()
-#         df2 = df[df['sci_center']==thes_topic]
-#         df_temp = df2[df2['all_kw'].notna()]
-#         df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
-#         row_ct = len(df_kw) 
-#         return f'{thes_topic} results for {state}: {row_ct}'  
-#     if thes_topic != 'all' and (click == 0 or state == ''):
-#         df2 = df.copy()
-#         df2 = df[df['sci_center']==thes_topic]
-#         row_ct = len(df2) 
-#         return f'{thes_topic} Results: {row_ct}'
+
+# helper function to plot wordcloud
+def plot_wordcloud(data):
+    df = pd.DataFrame(data)
+    comment_words = '' 
+    stopwords = set(STOPWORDS) 
+    # iterate through the csv file 
+    for val in df.all_kw: 
+        # typecaste each val to string 
+        val = str(val) 
+        # split the value 
+        tokens = val.split() 
+        # Converts each token into lowercase 
+        for i in range(len(tokens)): 
+            tokens[i] = tokens[i].lower() 
+        comment_words += " ".join(tokens)+" "  
+        wordcloud = WordCloud(width = 1240, height = 200, 
+                    background_color ='white', 
+                    stopwords = stopwords, 
+                    min_font_size = 10).generate(comment_words) 
+    return wordcloud.to_image()
+
+@app.callback(
+    Output('live-update-text', 'children'),
+    [Input('thes_topic', 'value'),
+      Input('button', 'n_clicks')],
+    [State('kw', 'value')])
+def set_display_livedata(thes_topic, click, state):
+    #connect to database and obtain blood pressure where id=value
+    df = df_map.copy()
+    if len(thes_topic) == 0 and (click == 0 or state == ''):
+        df2 = df.copy()
+        row_ct = len(df2) 
+        if row_ct == 0:
+            return 'Keyword Not Found' 
+        return f'Total Dataset Count: {row_ct}'
+    if len(thes_topic) == 0 and click > 0 and state != '':
+        df2 = df.copy()
+        df_temp = df[df['all_kw'].notna()]
+        df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
+        row_ct = len(df_kw) 
+        if row_ct == 0:
+            return 'Keyword Not Found' 
+        return f'All results for {state}: {row_ct}'  
+    if len(thes_topic) != 0 and click > 0 and state != '':
+        df2 = df.copy()
+        df_temp = df2[df2['all_kw'].notna()]
+        df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
+        for i in thes_topic:
+            df_kw = df_kw.loc[df_kw['usgsThesString'].str.contains(i)] 
+        row_ct = len(df_kw) 
+        if row_ct == 0:
+            return 'Keyword Not Found' 
+        return f'Result Count: {row_ct}'  
+    if len(thes_topic) != 0 and (click == 0 or state == ''):
+        df2 = df.copy()
+        for i in thes_topic:
+            df_kw = df2.loc[df2['usgsThesString'].str.contains(i)] 
+        row_ct = len(df_kw) 
+        if row_ct == 0:
+            return 'Keyword Not Found' 
+        return f'Result Count: {row_ct}'
 
 @app.callback(
     Output('datatable', 'data'),
@@ -494,7 +494,23 @@ def update_selected_row_indices(thes_topic, click, state):
 def map_selection(data):
     aux = pd.DataFrame(data)
     if len(data) == 0:
-        return no_update
+        return {
+            "data": [{
+                    "type": "scattermapbox",
+                    "lat": [],
+                    "lon": [],
+                    "hoverinfo": "text",
+                    "hovertext": [],
+                    "mode": "markers+text",
+                    "name": [],
+                    "marker": {
+                        "size": 7,
+                        "opacity": 0.7,
+                        #"color": list(aux['sci_center']),
+                        },
+            }],
+            "layout": layout_map
+        }
     else:
         return {
             "data": [{
@@ -503,7 +519,7 @@ def map_selection(data):
                     "lon": list(aux['lon']),
                     "hoverinfo": "text",
                     "hovertext": [["{}".format(i)]
-                        for i in aux['title'].str[:125]],
+                        for i in aux['title'].str[:135]],
                     "mode": "markers+text",
                     "name": list(aux['sci_center']),
                     "marker": {
@@ -534,7 +550,6 @@ def make_wordcloud(data, thes_topic, click, state):
               [Input('datatable', 'data')])
 def update_download_link(data):
     dff = pd.DataFrame(data)
-    # df5 = 
     csv_string = dff.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string
