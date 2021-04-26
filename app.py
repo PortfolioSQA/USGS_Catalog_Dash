@@ -269,7 +269,8 @@ app.layout = html.Div(
                     [
                         html.Div(
                             [dcc.Graph(id='map-graph',
-                                  style={'margin-top': '10'})
+                                  style={'margin-top': '10'},
+                                  config={'displayModeBar': False},)
                     ],
                             className="explore-sb-box header-h2",
                         ),
