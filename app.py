@@ -247,7 +247,7 @@ app.layout = html.Div(
                                         'min-height': '1px',
                                         },
                                     options= [{'label': str(item),'value': str(item)} for item in usgs_thes_short],
-                                    value= 'arsenic',
+                                    value= 'bedrock',
                                     multi= True,
                                     clearable=True),
                         html.P(),
@@ -291,28 +291,6 @@ app.layout = html.Div(
                 ],
             className="row clearIt bg-light explore-sb-row",
         ),
-            #     html.Div(
-            #         [
-            #         #     html.Div(
-            #         # className="explore-sb-box header-h3",
-            #         #     ),
-
-            #         html.Div(
-            #         dcc.Loading(id='loading-1',
-            #             children=[html.Div(html.Img(id='wc',
-            #                                     style={'margin-top': '10'})),
-            #                 ],
-            #             type='default'),
-
-            #         className="col-lg-12 col-md-6 col-sm-12",
-
-            #                  ),   
-            #         # ],
-            #         # className="col-lg-6 col-md-6 col-sm-12",
-            #         # ),
-            #     ],
-            # className="row clearIt bg-light explore-sb-row",
-        # ),
         html.Div(
             [
                 html.H4("Science Data Catalog Results"),
@@ -321,8 +299,6 @@ app.layout = html.Div(
                     download="sci_data_catalog_results.csv",
                     href="",
                     target="_blank",
-                    # className="btn btn-success btn-sm download-listing align-right",
-                ),
                 dcc.Loading(id='loading-2',
                         children=[html.Div(
                 dash_table.DataTable(
