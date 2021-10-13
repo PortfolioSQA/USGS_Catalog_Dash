@@ -387,12 +387,12 @@ def filter_data(thes_topic, click, state):
     df3 = df_map.copy()
     if len(thes_topic) == 0 and (click == 0 or state == ''):
         return df3
-    if len(thes_topic) == 0 and click > 0 and state != '':
+    elif len(thes_topic) == 0 and click > 0 and state != '':
         df2 = df3.copy()
         df2 = df2[df2['all_kw'].notna()]
         df2 = df2.loc[df2['all_kw'].str.contains(state)]
         return df2
-    if len(thes_topic) != 0 and click > 0 and state != '':
+    elif len(thes_topic) != 0 and click > 0 and state != '':
         df2 = df3.copy()
         df2 = df2[df2['all_kw'].notna()]
         df2 = df2[df2['usgsThesString'].notna()]
@@ -400,7 +400,7 @@ def filter_data(thes_topic, click, state):
         for i in thes_topic:
             df2 = df2.loc[df2['usgsThesString'].str.contains(i)]  
         return df2
-    if len(thes_topic) != 0 and (click == 0 or state == ''):
+    elif len(thes_topic) != 0 and (click == 0 or state == ''):
         df2 = df3.copy()
         df2 = df2[df2['usgsThesString'].notna()]
         for i in thes_topic:
@@ -443,7 +443,7 @@ def set_display_livedata(thes_topic, click, state):
         if row_ct == 0:
             return 'Keyword Not Found' 
         return f'Total Dataset Count: {row_ct}'
-    if len(thes_topic) == 0 and click > 0 and state != '':
+    elif len(thes_topic) == 0 and click > 0 and state != '':
         df2 = df.copy()
         df_temp = df[df['all_kw'].notna()]
         df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
@@ -451,7 +451,7 @@ def set_display_livedata(thes_topic, click, state):
         if row_ct == 0:
             return 'Keyword Not Found' 
         return f'All results for {state}: {row_ct}'  
-    if len(thes_topic) != 0 and click > 0 and state != '':
+    elif len(thes_topic) != 0 and click > 0 and state != '':
         df2 = df.copy()
         df_temp = df2[df2['all_kw'].notna()]
         df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
@@ -461,7 +461,7 @@ def set_display_livedata(thes_topic, click, state):
         if row_ct == 0:
             return 'Keyword Not Found' 
         return f'Result Count: {row_ct}'  
-    if len(thes_topic) != 0 and (click == 0 or state == ''):
+    elif len(thes_topic) != 0 and (click == 0 or state == ''):
         df2 = df.copy()
         for i in thes_topic:
             df_kw = df2.loc[df2['usgsThesString'].str.contains(i)] 
