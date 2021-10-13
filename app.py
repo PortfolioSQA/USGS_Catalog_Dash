@@ -247,7 +247,7 @@ app.layout = html.Div(
                                         'min-height': '1px',
                                         },
                                     options= [{'label': str(item),'value': str(item)} for item in usgs_thes_short],
-                                    value= 'basins',
+                                    value= 'arsenic',
                                     multi= True,
                                     clearable=True),
                         html.P(),
@@ -437,7 +437,13 @@ def plot_wordcloud(data):
 def set_display_livedata(thes_topic, click, state):
     #connect to database and obtain blood pressure where id=value
     df = df_map.copy()
-    if len(thes_topic) == 0 and (click == 0 or state == ''):
+    if len(thes_topic) == 0 and click == 0 and state == '':
+        df2 = df.copy()
+        row_ct = len(df2) 
+        if row_ct == 0:
+            return 'Keyword Not Found' 
+        return f'Total Dataset Count: {row_ct}'
+    elif len(thes_topic) == 0 and click > 0 and state == '':
         df2 = df.copy()
         row_ct = len(df2) 
         if row_ct == 0:
