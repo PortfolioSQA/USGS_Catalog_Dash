@@ -247,7 +247,7 @@ app.layout = html.Div(
                                         'min-height': '1px',
                                         },
                                     options= [{'label': str(item),'value': str(item)} for item in usgs_thes_short],
-                                    value= '',
+                                    value= 'bedrock',
                                     multi= True,
                                     clearable=True),
                         html.P(),
