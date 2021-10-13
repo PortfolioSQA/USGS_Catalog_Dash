@@ -437,13 +437,7 @@ def plot_wordcloud(data):
 def set_display_livedata(thes_topic, click, state):
     #connect to database and obtain blood pressure where id=value
     df = df_map.copy()
-    if len(thes_topic) == 0 and click == 0 and state == '':
-        df2 = df.copy()
-        row_ct = len(df2) 
-        if row_ct == 0:
-            return 'Keyword Not Found' 
-        return f'Total Dataset Count: {row_ct}'
-    elif len(thes_topic) == 0 and click > 0 and state == '':
+    if len(thes_topic) == 0 and (click == 0 or state == ''):
         df2 = df.copy()
         row_ct = len(df2) 
         if row_ct == 0:
