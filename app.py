@@ -2,7 +2,6 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
-from etl import create_dfs, flatten_list
 from dash.dash import no_update
 import flask
 
@@ -13,7 +12,8 @@ from wordcloud import WordCloud, STOPWORDS
 from io import BytesIO
 import base64
 import urllib
-import numpy as np
+import pickle
+
 
 server = flask.Flask('app')
 
@@ -25,14 +25,12 @@ app.config['suppress_callback_exceptions'] = True
 mapbox_access_token = 'pk.eyJ1Ijoic2RjLWRhc2giLCJhIjoiY2tmMzZqb21vMDA2ejJ1cGdjeDg5OGRiOCJ9.alrKKaVlRO4DIJmMWYY1WQ'
 
 #load data
-sample_data = pd.read_csv('sdc_sample.csv')
-df_map = create_dfs(sample_data)
+with open("proc_data.csv", "rb") as fp:   # Unpickling
+    df_map = pickle.load(fp)
 
-# get a set of sorted USGS thesaurus kw
-joined_list = df_map.usgsThesList.tolist()
-usgs_thes_short = flatten_list(joined_list)
-usgs_thes_short = set(usgs_thes_short)
-usgs_thes_short = sorted(usgs_thes_short)
+#get a set of sorted USGS thesaurus kw
+with open("usgs_thes_short.txt", "rb") as fp:   # Unpickling
+    usgs_thes_short = pickle.load(fp)
 
 
 # USGS & ScienceBase Headers and Footers
@@ -247,7 +245,7 @@ app.layout = html.Div(
                                         'min-height': '1px',
                                         },
                                     options= [{'label': str(item),'value': str(item)} for item in usgs_thes_short],
-                                    value= 'bedrock',
+                                    value= '',
                                     multi= True,
                                     clearable=True),
                         html.P(),
@@ -283,6 +281,7 @@ app.layout = html.Div(
                                                 style={'margin-top': '10'})),
                             ],
                         type='default'),
+
                     className="explore-sb-box header-h1",),
                 
                 
@@ -290,25 +289,7 @@ app.layout = html.Div(
                 ],
             className="row clearIt bg-light explore-sb-row",
         ),
-            #     html.Div(
-            #         [
-            #         #     html.Div(
-            #         # className="explore-sb-box header-h3",
-            #         #     ),
-            #         html.Div(
-            #         dcc.Loading(id='loading-1',
-            #             children=[html.Div(html.Img(id='wc',
-            #                                     style={'margin-top': '10'})),
-            #                 ],
-            #             type='default'),
-            #         className="col-lg-12 col-md-6 col-sm-12",
-            #                  ),   
-            #         # ],
-            #         # className="col-lg-6 col-md-6 col-sm-12",
-            #         # ),
-            #     ],
-            # className="row clearIt bg-light explore-sb-row",
-        # ),
+
         html.Div(
             [
                 html.H4("Science Data Catalog Results"),
@@ -376,30 +357,33 @@ app.layout = html.Div(
         )
     ]
 )
+
 #______________________________________________________________________________
+
 def filter_data(thes_topic, click, state):
-    df3 = df_map.copy()
     if len(thes_topic) == 0 and (click == 0 or state == ''):
-        return df3
-    if len(thes_topic) == 0 and click > 0 and state != '':
-        df2 = df3.copy()
+        return df_map
+    elif len(thes_topic) == 0 and click > 0 and state != '':
+        df2 = df_map.copy()
         df2 = df2[df2['all_kw'].notna()]
         df2 = df2.loc[df2['all_kw'].str.contains(state)]
         return df2
-    if len(thes_topic) != 0 and click > 0 and state != '':
-        df2 = df3.copy()
+    elif len(thes_topic) != 0 and click > 0 and state != '':
+        df2 = df_map.copy()
         df2 = df2[df2['all_kw'].notna()]
         df2 = df2[df2['usgsThesString'].notna()]
         df2 = df2.loc[df2['all_kw'].str.contains(state)]
         for i in thes_topic:
             df2 = df2.loc[df2['usgsThesString'].str.contains(i)]  
         return df2
-    if len(thes_topic) != 0 and (click == 0 or state == ''):
-        df2 = df3.copy()
+    elif len(thes_topic) != 0 and (click == 0 or state == ''):
+        df2 = df_map.copy()
         df2 = df2[df2['usgsThesString'].notna()]
         for i in thes_topic:
-            df_th = df2.loc[df2['usgsThesString'].str.contains(i)]  
-        return df_th
+            df2 = df2.loc[df2['usgsThesString'].str.contains(i)]  
+        return df2
+
+
 # helper function to plot wordcloud
 def plot_wordcloud(data):
     df = pd.DataFrame(data)
@@ -412,7 +396,8 @@ def plot_wordcloud(data):
         # split the value 
         tokens = val.split() 
         # Converts each token into lowercase 
-        for i in range(len(tokens)): 
+        mx = min(150, len(tokens))
+        for i in range(mx): 
             tokens[i] = tokens[i].lower() 
         comment_words += " ".join(tokens)+" "  
         wordcloud = WordCloud(width = 1240, height = 200, 
@@ -420,46 +405,45 @@ def plot_wordcloud(data):
                     stopwords = stopwords, 
                     min_font_size = 10).generate(comment_words) 
     return wordcloud.to_image()
+
 @app.callback(
     Output('live-update-text', 'children'),
     [Input('thes_topic', 'value'),
       Input('button', 'n_clicks')],
     [State('kw', 'value')])
 def set_display_livedata(thes_topic, click, state):
-    #connect to database and obtain blood pressure where id=value
-    df = df_map.copy()
     if len(thes_topic) == 0 and (click == 0 or state == ''):
-        df2 = df.copy()
-        row_ct = len(df2) 
-        if row_ct == 0:
-            return 'Keyword Not Found' 
+        row_ct = len(df_map) 
         return f'Total Dataset Count: {row_ct}'
     if len(thes_topic) == 0 and click > 0 and state != '':
-        df2 = df.copy()
-        df_temp = df[df['all_kw'].notna()]
-        df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
-        row_ct = len(df_kw) 
+        df2 = df_map.copy()
+        df2 = df2[df2['all_kw'].notna()]
+        df2 = df2.loc[df2['all_kw'].str.contains(state)]
+        row_ct = len(df2) 
         if row_ct == 0:
             return 'Keyword Not Found' 
         return f'All results for {state}: {row_ct}'  
     if len(thes_topic) != 0 and click > 0 and state != '':
-        df2 = df.copy()
-        df_temp = df2[df2['all_kw'].notna()]
-        df_kw = df_temp.loc[df_temp['all_kw'].str.contains(state)]
+        df2 = df_map.copy()
+        df2 = df2[df2['all_kw'].notna()]
+        df2 = df2[df2['usgsThesString'].notna()]
+        df2 = df2.loc[df2['all_kw'].str.contains(state)]
         for i in thes_topic:
-            df_kw = df_kw.loc[df_kw['usgsThesString'].str.contains(i)] 
-        row_ct = len(df_kw) 
+            df2 = df2.loc[df2['usgsThesString'].str.contains(i)] 
+        row_ct = len(df2) 
         if row_ct == 0:
             return 'Keyword Not Found' 
         return f'Result Count: {row_ct}'  
     if len(thes_topic) != 0 and (click == 0 or state == ''):
-        df2 = df.copy()
+        df2 = df_map.copy()
+        df2 = df2[df2['usgsThesString'].notna()]
         for i in thes_topic:
-            df_kw = df2.loc[df2['usgsThesString'].str.contains(i)] 
-        row_ct = len(df_kw) 
+            df2 = df2.loc[df2['usgsThesString'].str.contains(i)] 
+        row_ct = len(df2) 
         if row_ct == 0:
             return 'Keyword Not Found' 
         return f'Result Count: {row_ct}'
+
 @app.callback(
     Output('datatable', 'data'),
     [Input('thes_topic', 'value'),
@@ -469,13 +453,16 @@ def table_selection(thes_topic, click, state):
     if (len(thes_topic) == 0) and (click == 0 or state == ''):
         return df_map.to_dict("records")
     else:
-        df3 = filter_data(thes_topic, click, state)
-        return df3.to_dict("records")
+        df5 = filter_data(thes_topic, click, state)
+        return df5.to_dict("records")
+
 def update_selected_row_indices(thes_topic, click, state):
     if (len(thes_topic) == 0) and click == 0:
         return no_update
     df4 = filter_data(thes_topic, click, state)
     return df4.to_dict("records")
+
+
 @app.callback(
     Output('map-graph', 'figure'),
     [Input('datatable', 'data')])
@@ -533,6 +520,7 @@ def make_wordcloud(data, thes_topic, click, state):
             img = BytesIO()
             plot_wordcloud(data).save(img, format='PNG')
             return 'data:image/png;base64,{}'.format(base64.b64encode(img.getvalue()).decode())
+
 @app.callback(Output('download-button', 'href'), 
               [Input('datatable', 'data')])
 def update_download_link(data):
@@ -540,5 +528,7 @@ def update_download_link(data):
     csv_string = dff.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string
+
+
 if __name__ == "__main__":
     app.run_server(debug=True, port = 8080)

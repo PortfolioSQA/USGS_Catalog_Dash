@@ -5,3 +5,4 @@ pandas
 numpy
 wordcloud
 gunicorn
+Pickle
