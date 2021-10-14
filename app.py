@@ -396,8 +396,7 @@ def plot_wordcloud(data):
         # split the value 
         tokens = val.split() 
         # Converts each token into lowercase 
-        mx = min(150, len(tokens))
-        for i in range(mx): 
+        for i in range(len(tokens): 
             tokens[i] = tokens[i].lower() 
         comment_words += " ".join(tokens)+" "  
         wordcloud = WordCloud(width = 1240, height = 200, 
