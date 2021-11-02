@@ -38,7 +38,7 @@ def f(row):
 def g(row):
     val = Convert_to_List(row['usgsThesaurusKeyword'])
     return val
-
+# 
 
 def create_dfs(sample_data):
     # Drop rows with no location for mapping 
@@ -140,6 +140,30 @@ def flatten_list(_2d_list):
 
 # sample_data = pd.read_csv('sdc_sample.csv')
 # df_map = create_dfs(sample_data)
+# joined_list = df_map.usgsThesList.tolist()
+# usgs_thes_short = flatten_list(joined_list)
+# usgs_thes_short = set(usgs_thes_short)
+# usgs_thes_short = sorted(usgs_thes_short)
+# # print(usgs_thes_short[0:10])
+
+
+# import pickle
+
+# # with open("usgs_thes_short.txt", "wb") as fp:   #Pickling
+# #     pickle.dump(usgs_thes_short, fp)
+
+# # with open("usgs_thes_short.txt", "rb") as fp:   # Unpickling
+# #     b = pickle.load(fp)
+
+# with open("proc_data.csv", "wb") as fp:   #Pickling
+#     pickle.dump(df_map, fp)
+
+# with open("proc_data.csv", "rb") as fp:   # Unpickling
+#     c = pickle.load(fp)
+
+
+
+
 
 # # get a set of sorted science centers
 # SC = set(df_map['sci_center'])

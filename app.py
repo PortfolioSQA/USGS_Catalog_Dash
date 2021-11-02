@@ -245,7 +245,7 @@ app.layout = html.Div(
                                         'min-height': '1px',
                                         },
                                     options= [{'label': str(item),'value': str(item)} for item in usgs_thes_short],
-                                    value= 'amphibians',
+                                    value= '',
                                     multi= True,
                                     clearable=True),
                         html.P(),
@@ -396,7 +396,8 @@ def plot_wordcloud(data):
         # split the value 
         tokens = val.split() 
         # Converts each token into lowercase 
-        for i in range(len(tokens): 
+        mx = min(150, len(tokens))
+        for i in range(mx): 
             tokens[i] = tokens[i].lower() 
         comment_words += " ".join(tokens)+" "  
         wordcloud = WordCloud(width = 1240, height = 200, 
@@ -530,4 +531,4 @@ def update_download_link(data):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True, port = 8080)
+    app.run_server(debug=True, port = 8090)
